@@ -1,0 +1,22 @@
+{
+    "name": "zfcampus/zf-deploy",
+    "description": "Deployment tool for ZF2 application",
+    "type": "library",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "zf2",
+        "zend",
+        "apigility"
+    ],
+    "repositories": [
+        { "type": "composer", "url": "https://packages.zendframework.com" }
+    ],
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    },
+    "require": {
+        "php": ">=5.3.23",
+    }
+}

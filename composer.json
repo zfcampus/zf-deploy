@@ -8,6 +8,11 @@
         "zend",
         "apigility"
     ],
+    "homepage": "http://framework.zend.com/",
+    "support": {
+        "source": "https://github.com/zfcampus/zf-deploy",
+        "issues": "https://github.com/zfcampus/zf-deploy/issues"
+    },
     "extra": {
         "branch-alias": {
             "dev-master": "1.0-dev"

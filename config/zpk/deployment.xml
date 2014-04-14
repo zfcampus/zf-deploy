@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- @See: http://files.zend.com/help/Zend-Server-6/zend-server.htm#understanding_the_package_structure.htm -->
 <package xmlns="http://www.zend.com/server/deployment-descriptor/1.0" version="1.0">
-    <name>$name</name>
+    <name>{NAME}</name>
     <version>
-        <release>1.0.0</release>
+        <release>{VERSION}</release>
     </version>
+    <icon>{LOGO}</icon>
     <appdir>data</appdir>
+    <docroot>data/public</docroot>
 </package>

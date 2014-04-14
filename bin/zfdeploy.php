@@ -24,6 +24,13 @@ if (!is_dir($appPath)) {
     exit(1);
 }
 
+// Check for a valid ZF2 application in $appPath
+$appConfig = @require $appPath . '/config/application.config.php';
+if (!$appConfig || !isset($appConfig['modules'])) {
+    printf("\033[31mError: the folder %s doesn't contain a standard ZF2 application\033[0m\n", $appPath);
+    exit(1);
+}
+
 if (strtolower($out) !== '-o') {
     printUsage();
     exit(1);
@@ -63,7 +70,7 @@ if (false !== $pos) {
     $vendor = true;
 }
 
-// Composer execution true/false
+// Composer execution true/false (optional)
 $composer = true;
 $pos = array_search('-composer', $argv);
 if (false !== $pos) {
@@ -74,7 +81,7 @@ if (false !== $pos) {
     $composer = strtolower($argv[$pos+1]) === 'on' ? true : false;
 }
 
-// Gitignore parse true/false
+// Gitignore parse true/false (optional)
 $gitignore = true;
 $pos = array_search('-gitignore', $argv);
 if (false !== $pos) {
@@ -85,7 +92,7 @@ if (false !== $pos) {
     $gitignore = strtolower($argv[$pos+1]) === 'on' ? true : false;
 }
 
-// Deployment.xml
+// Specify a deployment.xml for zpk format (optional)
 $pos = array_search('-d', $argv);
 if (false !== $pos) {
     if (!isset($argv[$pos+1])) {
@@ -96,18 +103,30 @@ if (false !== $pos) {
         printf("\033[31mError: The deployment XML file %s doesn't exist\033[0m\n", $argv[$pos+1]);
         exit(1);
     }
-    // Validate the deployment XML file
-    $dom = new \DOMDocument();
-    $dom->loadXML($argv[$pos+1]);
-    if (!$dom->schemaValidate(__DIR__ . '/../config/zpk/schema.xsd')) {
-        printf("\033[31mError: The deployment XML file %s is not valid\033[0m\n", $argv[$pos+1]);
+    if (!validateXml($argv[$pos+1], __DIR__ . '/../config/zpk/schema.xsd')) {
+        printf("\033[31mError: The deployment XML file %s is not valid\033[0m\n", $file);
         exit(1);
     }
     $deployXML = $argv[$pos+1];
 }
 
+// Specify a version to include in the zpk (optional)
+$pos = array_search('-ver', $argv);
+if (false !== $pos) {
+    if (!isset($argv[$pos+1])) {
+        printUsage();
+        exit(1);    
+    }
+    $version = $argv[$pos+1];
+} 
+if (!isset($version)) {
+    $version = date("Y-m-d_H:i");
+}
+
 // Check for requirements
 checkRequirements($format);
+
+printf("\033[32mCreating the %s deploy package...\n\033[0m", strtoupper($format));
 
 $modules = glob($appPath . '/module/*', GLOB_ONLYDIR);
 
@@ -133,9 +152,23 @@ if ($format === 'zpk') {
     if (isset($deployXML)) {
         copy($deployXML, $tmpDir . '/deployment.xml');
     } else {
-        $deployString = file_get_contents(__DIR__ . '/../config/zpk/deployment.xml');
-        $deployString = str_replace('$name', basename($fileOut, ".$format"), $deployString);
+        $defaultDeployXml = __DIR__ . '/../config/zpk/deployment.xml';
+        $deployString = file_get_contents($defaultDeployXml);
+        $deployString = str_replace('{NAME}', basename($fileOut, ".$format"), $deployString);
+        $deployString = str_replace('{VERSION}', $version, $deployString);
+        $logoFile = __DIR__ . '/../config/zpk/logo/zf2-logo.png';
+        $logo = 'zf2-logo.png';
+        if (in_array('ZF\Apigility', $appConfig['modules'])) {
+            $logoFile = __DIR__ . '/../config/zpk/logo/apigility-logo.png';
+            $logo = 'apigility-logo.png';
+        }
+        copy($logoFile, $tmpDir . '/' . $logo);
+        $deployString = str_replace('{LOGO}', $logo, $deployString); 
         file_put_contents($tmpDir . '/deployment.xml', $deployString);
+        if (!validateXml($defaultDeployXml, __DIR__ . '/../config/zpk/schema.xsd')) {
+            printf("\033[31mError: The default file %s is not valid. Check the configuration, please.\033[0m\n", $defaultDeployXml);
+            exit(1);
+        }
     }
     $tmpDir .= '/data';
 }
@@ -166,7 +199,7 @@ if (!isset($vendor)) {
 recursiveCopy($appPath, $tmpDir, $exclude, $gitignore);
 
 if (!isset($vendor) && $composer) {
-    printf("Executing composer install... (be patient please)\n");
+    printf("\033[32mExecuting composer install... (be patient please)\033[0m\n");
     
     // Execute the composer install
     chdir($tmpDir);
@@ -199,15 +232,16 @@ if ($format === 'zpk') {
     $tmpDir = dirname($tmpDir);
 }
 if (!createPackage($fileOut, $tmpDir, $format)) {
-    printf("\033[31mError during the package preparation.\033[0m\n");
+    printf("\033[31mError during the package creation.\033[0m\n");
     exit(1);
 }
+
 recursiveDelete($tmpDir);
 
 if ($format === 'tar.gz' || $format === 'tgz') {
     $fileOut = substr($fileOut, 0 , -3) . $format;
 } 
-printf("\033[32mPackage successfully created in %s (%d bytes)\033[0m\n", $fileOut, filesize($fileOut));
+printf("\033[32mDone! Package successfully created in %s (%d bytes)\033[0m\n", $fileOut, filesize($fileOut));
 
 
 /**
@@ -216,15 +250,18 @@ printf("\033[32mPackage successfully created in %s (%d bytes)\033[0m\n", $fileOu
 function printUsage()
 {
     printf("\033[33mZFDeploy %s - Deploy Zend Framework 2 applications\033[0m\n", ZFDEPLOY_VER);
-    printf("\033[32mUsage: %s <path> -o <filename> [-m <modules>] [-vendor] \033[0m\n", basename(__FILE__)); 
-    printf("\033[32m       [-composer <on|off>] [-gitignore <on|off>] [-d <deploy.xml>]\033[0m\n");
-    printf("<path>              Path of the application to deploy\n");
-    printf("-o <filename>       Filename of the package output to deploy\n");
-    printf("-m <modules>        The list of modules to deploy, separated by comma (if empty deploy all)\n");
-    printf("-vendor             Include the vendor folder (not included by default)\n");
-    printf("-composer <on|off>  Determine if execute composer install (on by default)\n");
-    printf("-gitignore <on|off> Determine if parse the .gitignore to exclude file/folder (on by default)\n");
-    printf("-d <deploy.xml>     Specify the deployment.xml file to use for ZPK format (default in /data/deployment.xml)\n");
+    printf("\033[32mUsage: %s <path> -o <filename> \033[0m\n", basename(__FILE__));
+    printf("\033[32m       [-m <modules>] [-vendor] [-composer <on|off>]\033[0m\n"); 
+    printf("\033[32m       [-gitignore <on|off>] [-d <deploy.xml>] [-ver <version>]\033[0m\n");
+    printf("\033[32m<path>\033[0m              Path of the application to deploy\n");
+    printf("\033[32m-o <filename>\033[0m       Filename of the package output to deploy\n");
+    printf("\033[37mOptional parameters:\033[0m\n");
+    printf("\033[32m-m <modules>\033[0m        The list of modules to deploy, separated by comma (if empty deploy all)\n");
+    printf("\033[32m-vendor\033[0m             Include the vendor folder (not included by default)\n");
+    printf("\033[32m-composer <on|off>\033[0m  Determine if execute composer install (on by default)\n");
+    printf("\033[32m-gitignore <on|off>\033[0m Determine if parse the .gitignore to exclude file/folder (on by default)\n");
+    printf("\033[32m-d <deploy.xml>\033[0m     Specify the deployment.xml file to use for ZPK format (default in /data/deployment.xml)\n");
+    printf("\033[32m-ver <version>\033[0m      Specify the application version to use for ZPK format (default is timestamp)\n");
     printf("\033[37mCopyright 2005-%s by Zend Technologies Ltd. - http://framework.zend.com\033[0m\n", date("Y"));
 }
 
@@ -252,6 +289,27 @@ function checkRequirements($format) {
             } 
             break;    
     }
+}
+
+/**
+ * Validate an XML file against a XSD schema
+ *
+ * @param string $file
+ * @param string $schema
+ */
+function validateXml($file, $schema) {
+    if (!file_exists($file)) {
+        printf("\033[31mError: The %s file doesn't exists.\033[0m\n", $file);
+        exit(1);
+    }
+    if (!file_exists($schema)) {
+        printf("\033[31mError: The %s schema doesn't exists.\033[0m\n", $schema);
+        exit(1);
+    }
+    // Validate the deployment XML file
+    $dom = new \DOMDocument();
+    $dom->loadXML(file_get_contents($file));
+    return $dom->schemaValidate($schema);
 }
 
 /**
@@ -346,7 +404,8 @@ function createPackage($fileOut, $dir, $format)
         RecursiveIteratorIterator::LEAVES_ONLY
     );
 
-    $dirPos = strlen($dir);
+    // Remove the relative path
+    $dirPos = strlen($dir) + 1;
     foreach ($files as $name => $file) {
         switch ($format) {
             case 'zip':

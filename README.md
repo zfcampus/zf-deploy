@@ -22,7 +22,7 @@ using the proper extension (e.g. `application.zip` will create a ZIP file).
 The full syntax of `zfdeploy.php` includes also the following optional parameters:
 
 ```bash
-$ zfdeploy.php <path> -o <filename> [-m <modules>] [-vendor] [-composer <on|off>] [-gitignore <on|off>] [-d <deploy.xml>] [-ver <version>]
+$ bin/zfdeploy.php <path> -o <filename> [-m <modules>] [-vendor] [-composer <on|off>] [-gitignore <on|off>] [-d <deploy.xml>] [-ver <version>]
 ```
 
 where:
@@ -51,6 +51,7 @@ in the deployment package. You can disable the usage of the `.gitignore` file us
 
 
 Another important part of the deployment of a ZF2 application is the usage of [composer](https://getcomposer.org).
+
 **ZFDeploy** executes the following composer command during the creation of the deployment package:
 
 ```bash 

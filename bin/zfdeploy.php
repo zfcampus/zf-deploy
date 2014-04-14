@@ -260,7 +260,7 @@ function printUsage()
     printf("\033[32m-vendor\033[0m             Include the vendor folder (not included by default)\n");
     printf("\033[32m-composer <on|off>\033[0m  Determine if execute composer install (on by default)\n");
     printf("\033[32m-gitignore <on|off>\033[0m Determine if parse the .gitignore to exclude file/folder (on by default)\n");
-    printf("\033[32m-d <deploy.xml>\033[0m     Specify the deployment.xml file to use for ZPK format (default in /data/deployment.xml)\n");
+    printf("\033[32m-d <deploy.xml>\033[0m     Specify the deployment.xml file to use for ZPK format (default in config/zpk/deployment.xml)\n");
     printf("\033[32m-ver <version>\033[0m      Specify the application version to use for ZPK format (default is timestamp)\n");
     printf("\033[37mCopyright 2005-%s by Zend Technologies Ltd. - http://framework.zend.com\033[0m\n", date("Y"));
 }

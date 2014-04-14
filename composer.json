@@ -8,9 +8,6 @@
         "zend",
         "apigility"
     ],
-    "repositories": [
-        { "type": "composer", "url": "https://packages.zendframework.com" }
-    ],
     "extra": {
         "branch-alias": {
             "dev-master": "1.0-dev"
@@ -18,5 +15,6 @@
     },
     "require": {
         "php": ">=5.3.23",
-    }
+    },
+    "bin": ["bin/zfdeploy.php"]
 }

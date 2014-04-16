@@ -27,7 +27,7 @@ $ bin/zfdeploy.php <path> -o <filename> [-m <modules>] [-vendor] [-composer <on|
 
 where:
 
-```
+```bash
 -m <modules>        The list of modules to deploy, separated by comma (if empty deploy all)
 -vendor             Include the vendor folder (not included by default)
 -composer <on|off>  Determine if execute composer install (on by default)

@@ -335,7 +335,7 @@ function recursiveCopy($src, $dst, $exclude = array(), $gitignore = true) {
     }
     @mkdir($dst, 0775, true);
     while(false !== ( $file = readdir($dir)) ) {
-        if ($file === '.' || $file === '..') {
+        if ($file === '.' || $file === '..' || $file === '.git') {
             continue;
         }
         if (isset($exclude[$src . '/' . $file]) && $exclude[$src . '/' . $file]) {

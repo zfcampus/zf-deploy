@@ -9,7 +9,7 @@
  */
 
 define ('ZFDEPLOY_VER', '0.1');
-$validFormat = array('zip', 'tar', 'tgz', 'tar.gz', 'zpk');
+$validFormat = array('zip', 'tar', 'tgz', 'tar\.gz', 'zpk');
 
 ini_set('user_agent', 'ZFDeploy - deploy ZF2 applications, command line tool');
 
@@ -41,13 +41,19 @@ if (file_exists($fileOut)) {
     exit(1);
 }
 
-preg_match('/\.(.*)$/', $fileOut, $matches);
-if (!isset($matches[1]) || !in_array($matches[1], $validFormat)) {
+$format = false;
+foreach ($validFormat as $extension) {
+    $pattern = '/\.' . $extension . '$/';
+    if (preg_match($pattern, $fileOut)) {
+        $format = $extension;
+        break;
+    }
+}
+if (! $format) {
     printf("\033[31mError: I cannot recognize the file format of the package %s\033[0m\n", $fileOut);
     printf("Valid file formats are: %s\n", implode(', ', $validFormat));
     exit(1);
 }
-$format = $matches[1];
 
 if ($format == 'tgz' || $format == 'tar.gz') {
     $fileOut = ($format == 'tgz') ? substr($fileOut, 0, -3) : substr($fileOut, 0, -6);

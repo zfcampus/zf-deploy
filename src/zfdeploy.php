@@ -168,7 +168,7 @@ if ($format === 'zpk') {
             $logo = 'apigility-logo.png';
         }
         copy($logoFile, $tmpDir . '/' . $logo);
-        $deployString = str_replace('{LOGO}', $logo, $deployString); 
+        $deployString = str_replace('{LOGO}', $logo, $deployString);
         file_put_contents($tmpDir . '/deployment.xml', $deployString);
         if (!validateXml($defaultDeployXml, __DIR__ . '/../config/zpk/schema.xsd')) {
             printf("\033[31mError: The default file %s is not valid. Check the configuration, please.\033[0m\n", $defaultDeployXml);
@@ -205,7 +205,7 @@ recursiveCopy($appPath, $tmpDir, $exclude, $gitignore);
 
 if (!isset($vendor) && $composer) {
     printf("\033[32mExecuting composer install... (be patient please)\033[0m\n");
-    
+
     // Execute the composer install
     chdir($tmpDir);
     $result = exec("composer 2>&1");
@@ -217,16 +217,16 @@ if (!isset($vendor) && $composer) {
             $downloaded = true;
         } else {
             // Self update of composer
-            exec("php composer.phar self-update 2>&1"); 
-        }    
+            exec("php composer.phar self-update 2>&1");
+        }
         $result = exec("php composer.phar install --no-dev --prefer-dist --optimize-autoloader 2>&1");
         if ($downloaded) {
             @unlink ($tmpDir . '/composer.phar');
         }
     } else {
         $result = exec("composer install --no-dev --prefer-dist --optimize-autoloader 2>&1");
-    } 
-            
+    }
+
     if (empty($result)) {
         printf("\033[31mError: composer error during the install command\033[0m\n");
         exit(1);
@@ -245,7 +245,7 @@ recursiveDelete($tmpDir);
 
 if ($format === 'tar.gz' || $format === 'tgz') {
     $fileOut = substr($fileOut, 0 , -3) . $format;
-} 
+}
 printf("\033[32mDone! Package successfully created in %s (%d bytes)\033[0m\n", $fileOut, filesize($fileOut));
 
 
@@ -272,7 +272,8 @@ function printUsage($usage)
  *
  * @param string $format
  */
-function checkRequirements($format) {
+function checkRequirements($format)
+{
     switch ($format) {
         case 'zip':
         case 'zpk':
@@ -283,13 +284,13 @@ function checkRequirements($format) {
             break;
 
         case 'tar':
-        case 'tar.gz':    
+        case 'tar.gz':
         case 'tgz':
             if (!class_exists('PharData')) {
                 printf("\033[31mError: the Phar extension of PHP is not loaded.\033[0m\n");
                 exit(1);
-            } 
-            break;    
+            }
+            break;
     }
 }
 
@@ -299,7 +300,8 @@ function checkRequirements($format) {
  * @param string $file
  * @param string $schema
  */
-function validateXml($file, $schema) {
+function validateXml($file, $schema)
+{
     if (!file_exists($file)) {
         printf("\033[31mError: The %s file doesn't exists.\033[0m\n", $file);
         exit(1);
@@ -322,7 +324,8 @@ function validateXml($file, $schema) {
  * @param array   $exclude   File/folder to exclude in the copy as associative array (true/false)
  * @param boolean $gitignore Determine if parse the .gitignore file to exclude file/folder in the copy
  */
-function recursiveCopy($src, $dst, $exclude = array(), $gitignore = true) {
+function recursiveCopy($src, $dst, $exclude = array(), $gitignore = true)
+{
     $dir = opendir($src);
     if ($gitignore && file_exists($src . '/.gitignore')) {
         foreach (file($src . '/.gitignore', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $git) {
@@ -342,7 +345,7 @@ function recursiveCopy($src, $dst, $exclude = array(), $gitignore = true) {
         }
         if (isset($exclude[$src . '/' . $file]) && $exclude[$src . '/' . $file]) {
             continue;
-        } 
+        }
         if (is_dir($src . '/' . $file)) {
             recursiveCopy($src . '/' . $file, $dst . '/' . $file, $exclude);
         } else {
@@ -361,8 +364,7 @@ function recursiveDelete($dir)
 {
     if (!$dh = @opendir($dir))  {
         return false;
-    }
-    while (false !== ($obj = readdir($dh))) {
+    } while (false !== ($obj = readdir($dh))) {
         if ($obj == '.' || $obj == '..') {
             continue;
         }
@@ -375,7 +377,7 @@ function recursiveDelete($dir)
     closedir($dh);
     @rmdir($dir);
     return true;
-} 
+}
 
 /**
  * Create a ZIP file
@@ -394,7 +396,7 @@ function createPackage($fileOut, $dir, $format)
             $zip->open($fileOut, ZipArchive::CREATE);
             break;
         case 'tar':
-        case 'tar.gz':    
+        case 'tar.gz':
         case 'tgz':
             $tgz = new PharData($fileOut);
             break;
@@ -414,8 +416,8 @@ function createPackage($fileOut, $dir, $format)
             case 'zpk':
                 $zip->addFile($file, substr($file, $dirPos));
                 break;
-            case 'tar':    
-            case 'tar.gz':    
+            case 'tar':
+            case 'tar.gz':
             case 'tgz':
                 $tgz->addFile($file, substr($file, $dirPos));
                 break;
@@ -426,16 +428,16 @@ function createPackage($fileOut, $dir, $format)
         case 'zpk':
             $zip->close();
             break;
-        case 'tar.gz':    
+        case 'tar.gz':
             $tgz->compress(Phar::GZ);
             unlink($fileOut);
             break;
-        case 'tgz':    
+        case 'tgz':
             $tgz->compress(Phar::GZ);
             unlink($fileOut);
             $file = substr($fileOut, 0, -3);
             rename($file . 'tar.gz', $file . 'tgz');
             break;
-    }    
+    }
     return true;
 }

@@ -19,7 +19,8 @@
         }
     },
     "require": {
-        "php": ">=5.3.23"
+        "php": ">=5.3.23",
+        "zendframework/zend-console": "~2.0"
     },
     "bin": ["bin/zfdeploy.php"]
 }

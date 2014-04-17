@@ -223,13 +223,13 @@ $exclude = array(
     $appPath . '/module' => true
 );
 
-if (!isset($vendor)) {
+if (!$vendor) {
     $exclude[$appPath . '/composer.lock'] = true;
     $exclude[$appPath . '/vendor'] = true;
 }
 recursiveCopy($appPath, $tmpDir, $exclude, $gitignore);
 
-if (!isset($vendor) && $composer) {
+if (!$vendor && $composer) {
     printf("\033[32mExecuting composer install... (be patient please)\033[0m\n");
 
     // Execute the composer install

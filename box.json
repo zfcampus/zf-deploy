@@ -3,6 +3,9 @@
     "directories": [
         "src"
     ],
+    "files": [
+        "LICENSE.txt"
+    ],
     "finder": [
         {
             "name": "*.php",

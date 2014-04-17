@@ -66,22 +66,10 @@ try {
     exit(1);
 }
 
+// Validate output file
 if (! $fileOut) {
     printf("\033[31mError: the package name is required.\033[0m\n\n");
     printUsage($opts->getUsageMessage());
-    exit(1);
-}
-
-$appPath = $opts->target ?: getcwd();
-if (!is_dir($appPath)) {
-    printf("\033[31mError: the path %s is not valid\033[0m\n\n", $appPath);
-    exit(1);
-}
-
-// Check for a valid ZF2 application in $appPath
-$appConfig = @require $appPath . '/config/application.config.php';
-if (!$appConfig || !isset($appConfig['modules'])) {
-    printf("\033[31mError: the folder %s doesn't contain a standard ZF2 application\033[0m\n", $appPath);
     exit(1);
 }
 
@@ -101,6 +89,25 @@ foreach ($validFormat as $extension) {
 if (! $format) {
     printf("\033[31mError: I cannot recognize the file format of the package %s\033[0m\n", $fileOut);
     printf("Valid file formats are: %s\n", implode(', ', $validFormat));
+    exit(1);
+}
+
+// Validate application path
+$appPath = $opts->target ?: getcwd();
+if (!is_dir($appPath)) {
+    printf("\033[31mError: the path %s is not valid\033[0m\n\n", $appPath);
+    exit(1);
+}
+
+// Check for a valid ZF2 application in $appPath
+$appConfigPath = $appPath . '/config/application.config.php';
+if (! file_exists($appConfigPath)) {
+    printf("\033[31mError: the folder %s doesn't contain a standard ZF2 application\033[0m\n", $appPath);
+    exit(1);
+}
+$appConfig = include $appConfigPath;
+if (!$appConfig || !isset($appConfig['modules'])) {
+    printf("\033[31mError: the folder %s doesn't contain a standard ZF2 application\033[0m\n", $appPath);
     exit(1);
 }
 

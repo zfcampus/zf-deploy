@@ -4,7 +4,7 @@ ZFDeploy - deploy ZF2 applications
 **ZFDeploy** is a command line tool to deploy [Zend Framework 2](http://framework.zend.com) applications.
 
 This tool produces a file package ready to be deployed. The tool supports the following format:
-ZIP, TAR, TGZ (.TAR.GZ), .ZPK (the deployment file format of [Zend Server 6](http://files.zend.com/help/Zend-Server-6/zend-server.htm#understanding_the_package_structure.htm)).
+ZIP, TAR, TGZ (.TAR.GZ), .ZPK (the deployment file format of [Zend Server 6](http://files.zend.com/help/Zend-Server/zend-server.htm#understanding_the_package_structure.htm)).
 
 Usage
 -----

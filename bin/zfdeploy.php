@@ -7,18 +7,45 @@
  * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
+use Zend\Console\Getopt;
 
 define ('ZFDEPLOY_VER', '0.1');
+ini_set('user_agent', 'ZFDeploy - deploy ZF2 applications, command line tool');
 $validFormat = array('zip', 'tar', 'tgz', 'tar\.gz', 'zpk');
 
-ini_set('user_agent', 'ZFDeploy - deploy ZF2 applications, command line tool');
+$opts = new Getopt(array(
+    'output|o=s'        => 'Output file package to create',
+    'target|t=s'        => 'Path to application directory',
+    'modules|m-s'       => 'Comma-separated list of specific modules to deploy (all by default)',
+    'vendor|e'          => 'Whether or not to include the vendor directory (disabled by default)',
+    'composer|c-s'      => 'Whether or not to execute composer; "on" or "off" (on by default)',
+    'gitignore|g-s'     => 'Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" (on by default)',
+    'deploymentxml|d-s' => 'Path to a custom deployment.xml file to use for ZPK packages',
+    'appversion|a-s'    => 'Specific application version to use for ZPK packages',
+    'version|v'         => 'Version of this script',
+    'help|h'            => 'This usage message',
+));
 
-if (count($argv) < 4) {
-   printUsage();
-   exit(1);
+try {
+    $opts->parse();
+} catch (Exception $e) {
+    printUsage($e->getUsageMessage());
+    exit(1);
 }
 
-list(,$appPath, $out, $fileOut) = $argv;
+if (isset($opts->help)) {
+    printUsage($opts->getUsageMessage());
+    exit(0);
+}
+
+if (isset($opts->version)) {
+    printVersion();
+    exit(0);
+}
+
+$appPath = $opts->target;
+$fileOut = $opts->output;
+
 if (!is_dir($appPath)) {
     printf("\033[31mError: the path %s is not valid\033[0m\n", $appPath);
     exit(1);
@@ -28,11 +55,6 @@ if (!is_dir($appPath)) {
 $appConfig = @require $appPath . '/config/application.config.php';
 if (!$appConfig || !isset($appConfig['modules'])) {
     printf("\033[31mError: the folder %s doesn't contain a standard ZF2 application\033[0m\n", $appPath);
-    exit(1);
-}
-
-if (strtolower($out) !== '-o') {
-    printUsage();
     exit(1);
 }
 
@@ -61,73 +83,44 @@ if ($format == 'tgz' || $format == 'tar.gz') {
 }
 
 // Modules to deploy (optional)
-$pos = array_search('-m', $argv);
-if (false !== $pos) {
-    if (!isset($argv[$pos+1])) {
-        printUsage();
-        exit(1);
-    }
-    $modToDeploy = explode(',', $argv[$pos+1]);
+if (isset($opts->modules)) {
+    $modsToDeploy = explode(',', $opts->modules);
 }
 
 // Include the vendor folder (optional)
-$pos = array_search('-vendor', $argv);
-if (false !== $pos) {
+$vendor = false;
+if (isset($opts->vendor)) {
     $vendor = true;
 }
 
 // Composer execution true/false (optional)
 $composer = true;
-$pos = array_search('-composer', $argv);
-if (false !== $pos) {
-    if (!isset($argv[$pos+1]) || !in_array(strtolower($argv[$pos+1]), array('on','off'))) {
-        printUsage();
-        exit(1);
-    }
-    $composer = strtolower($argv[$pos+1]) === 'on' ? true : false;
+if (isset($opts->composer) && strtolower($opts->composer) === 'off') {
+    $composer = false;
 }
 
 // Gitignore parse true/false (optional)
 $gitignore = true;
-$pos = array_search('-gitignore', $argv);
-if (false !== $pos) {
-    if (!isset($argv[$pos+1]) || !in_array(strtolower($argv[$pos+1]), array('on','off'))) {
-        printUsage();
-        exit(1);
-    }
-    $gitignore = strtolower($argv[$pos+1]) === 'on' ? true : false;
+if (isset($opts->gitignore) && strtolower($opts->gitignore) === 'off') {
+    $gitignore = false;
 }
 
 // Specify a deployment.xml for zpk format (optional)
-$pos = array_search('-d', $argv);
-if (false !== $pos) {
-    if (!isset($argv[$pos+1])) {
-        printUsage();
-        exit(1);    
-    }
-    if (!file_exists($argv[$pos+1])) {
+$deployXML = false;
+if (isset($opts->deploymentxml)) {
+    if (!file_exists($opts->deploymentxml)) {
         printf("\033[31mError: The deployment XML file %s doesn't exist\033[0m\n", $argv[$pos+1]);
         exit(1);
     }
-    if (!validateXml($argv[$pos+1], __DIR__ . '/../config/zpk/schema.xsd')) {
+    if (!validateXml($opts->deploymentxml, __DIR__ . '/../config/zpk/schema.xsd')) {
         printf("\033[31mError: The deployment XML file %s is not valid\033[0m\n", $file);
         exit(1);
     }
-    $deployXML = $argv[$pos+1];
+    $deployXML = $opts->deploymentxml;
 }
 
 // Specify a version to include in the zpk (optional)
-$pos = array_search('-ver', $argv);
-if (false !== $pos) {
-    if (!isset($argv[$pos+1])) {
-        printUsage();
-        exit(1);    
-    }
-    $version = $argv[$pos+1];
-} 
-if (!isset($version)) {
-    $version = date("Y-m-d_H:i");
-}
+$version = $opts->appversion ?: date('Y-m-d_H:i');
 
 // Check for requirements
 checkRequirements($format);
@@ -155,7 +148,7 @@ if ($format === 'zpk') {
     foreach (glob(__DIR__ . '/../config/zpk/scripts/*.php') as $script) {
         copy($script, $tmpDir . '/scripts');
     }
-    if (isset($deployXML)) {
+    if ($deployXML) {
         copy($deployXML, $tmpDir . '/deployment.xml');
     } else {
         $defaultDeployXml = __DIR__ . '/../config/zpk/deployment.xml';
@@ -180,8 +173,8 @@ if ($format === 'zpk') {
 }
 
 // Copy the modules
-if (isset($modToDeploy)) {
-    foreach ($modToDeploy as $mod) {
+if (isset($modsToDeploy)) {
+    foreach ($modsToDeploy as $mod) {
         $modToCopy = str_replace('\\','/', $mod);
         if (!is_dir($appPath . '/module/' . $modToCopy)) {
             printf("\033[31mError: the module %s doesn't exist in %s\033[0m\n", $mod, $appPath);
@@ -251,24 +244,22 @@ printf("\033[32mDone! Package successfully created in %s (%d bytes)\033[0m\n", $
 
 
 /**
- * Print the usage command and options
+ * Print the command version
  */
-function printUsage()
+function printVersion()
 {
     printf("\033[33mZFDeploy %s - Deploy Zend Framework 2 applications\033[0m\n", ZFDEPLOY_VER);
-    printf("\033[32mUsage: %s <path> -o <filename> \033[0m\n", basename(__FILE__));
-    printf("\033[32m       [-m <modules>] [-vendor] [-composer <on|off>]\033[0m\n"); 
-    printf("\033[32m       [-gitignore <on|off>] [-d <deploy.xml>] [-ver <version>]\033[0m\n");
-    printf("\033[32m<path>\033[0m              Path of the application to deploy\n");
-    printf("\033[32m-o <filename>\033[0m       Filename of the package output to deploy\n");
-    printf("\033[37mOptional parameters:\033[0m\n");
-    printf("\033[32m-m <modules>\033[0m        The list of modules to deploy, separated by comma (if empty deploy all)\n");
-    printf("\033[32m-vendor\033[0m             Include the vendor folder (not included by default)\n");
-    printf("\033[32m-composer <on|off>\033[0m  Determine if execute composer install (on by default)\n");
-    printf("\033[32m-gitignore <on|off>\033[0m Determine if parse the .gitignore to exclude file/folder (on by default)\n");
-    printf("\033[32m-d <deploy.xml>\033[0m     Specify the deployment.xml file to use for ZPK format (default in config/zpk/deployment.xml)\n");
-    printf("\033[32m-ver <version>\033[0m      Specify the application version to use for ZPK format (default is timestamp)\n");
-    printf("\033[37mCopyright 2005-%s by Zend Technologies Ltd. - http://framework.zend.com\033[0m\n", date("Y"));
+}
+
+/**
+ * Print the usage command and options
+ */
+function printUsage($usage)
+{
+    printVersion();
+    printf("\033[32mUsage: %s <options> \033[0m\n", basename(__FILE__));
+    printf("%s\n", $usage);
+    printf("\033[37mCopyright 2014-%s by Zend Technologies Ltd. - http://framework.zend.com\033[0m\n", date("Y"));
 }
 
 /**

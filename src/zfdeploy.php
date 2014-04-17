@@ -12,18 +12,52 @@ define ('ZFDEPLOY_VER', '@package_version@');
 ini_set('user_agent', 'ZFDeploy - deploy ZF2 applications, command line tool');
 $validFormat = array('zip', 'tar', 'tgz', 'tar\.gz', 'zpk');
 
-$opts = new Getopt(array(
-    'output|o=s'        => 'Output file package to create',
-    'target|t=s'        => 'Path to application directory',
-    'modules|m-s'       => 'Comma-separated list of specific modules to deploy (all by default)',
-    'vendor|e'          => 'Whether or not to include the vendor directory (disabled by default)',
-    'composer|c-s'      => 'Whether or not to execute composer; "on" or "off" (on by default)',
-    'gitignore|g-s'     => 'Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" (on by default)',
-    'deploymentxml|d-s' => 'Path to a custom deployment.xml file to use for ZPK packages',
-    'appversion|a-s'    => 'Specific application version to use for ZPK packages',
-    'version|v'         => 'Version of this script',
-    'help|h'            => 'This usage message',
-));
+$fileOut = false;
+$args = array();
+
+switch ($argc) {
+    case 1:
+        break;
+    case 2:
+    default:
+        if (0 === strpos($argv[1], '-')) {
+            $args = array_slice($argv, 1);
+            break;
+        }
+
+        $fileOut = $argv[1];
+        if (2 < $argc) {
+            $args = array_slice($argv, 2);
+        }
+        break;
+}
+
+$opts = new Getopt(
+    array(
+        'target|t-s'        => 'Path to application directory; assumes current working directory by default',
+        'modules|m-s'       => 'Comma-separated list of specific modules to deploy (all by default)',
+        'vendor|e'          => 'Whether or not to include the vendor directory (disabled by default)',
+        'composer|c-s'      => 'Whether or not to execute composer; "on" or "off" (on by default)',
+        'gitignore|g-s'     => 'Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" (on by default)',
+        'deploymentxml|d-s' => 'Path to a custom deployment.xml file to use for ZPK packages',
+        'appversion|a-s'    => 'Specific application version to use for ZPK packages',
+        'version|v'         => 'Version of this script',
+        'help|h'            => 'This usage message',
+    ),
+    $args, // seed it with the arguments
+    array(
+        Getopt::CONFIG_PARAMETER_SEPARATOR => ',', // auto-split , separated values
+    )
+);
+
+$opts->setOptionCallback('help', function () use ($opts) {
+    printUsage($opts->getUsageMessage());
+    exit(0);
+});
+$opts->setOptionCallback('version', function () {
+    printVersion();
+    exit(0);
+});
 
 try {
     $opts->parse();
@@ -32,28 +66,15 @@ try {
     exit(1);
 }
 
-if (isset($opts->help)) {
+if (! $fileOut) {
+    printf("\033[31mError: the package name is required.\033[0m\n\n");
     printUsage($opts->getUsageMessage());
-    exit(0);
-}
-
-if (isset($opts->version)) {
-    printVersion();
-    exit(0);
-}
-
-$appPath = $opts->target;
-$fileOut = $opts->output;
-
-if (! $appPath || ! $fileOut) {
-    $usage = $opts->getUsageMessage();
-    $usage .= sprintf("\n\033[31mError: both the target and output arguments are required.\033[0m\n");
-    printUsage($usage);
     exit(1);
 }
 
+$appPath = $opts->target ?: getcwd();
 if (!is_dir($appPath)) {
-    printf("\033[31mError: the path %s is not valid\033[0m\n", $appPath);
+    printf("\033[31mError: the path %s is not valid\033[0m\n\n", $appPath);
     exit(1);
 }
 
@@ -89,9 +110,7 @@ if ($format == 'tgz' || $format == 'tar.gz') {
 }
 
 // Modules to deploy (optional)
-if (isset($opts->modules)) {
-    $modsToDeploy = explode(',', $opts->modules);
-}
+$modsToDeploy = $opts->modules ?: false;
 
 // Include the vendor folder (optional)
 $vendor = false;
@@ -179,7 +198,7 @@ if ($format === 'zpk') {
 }
 
 // Copy the modules
-if (isset($modsToDeploy)) {
+if ($modsToDeploy) {
     foreach ($modsToDeploy as $mod) {
         $modToCopy = str_replace('\\','/', $mod);
         if (!is_dir($appPath . '/module/' . $modToCopy)) {
@@ -254,7 +273,7 @@ printf("\033[32mDone! Package successfully created in %s (%d bytes)\033[0m\n", $
  */
 function printVersion()
 {
-    printf("\033[33mZFDeploy %s - Deploy Zend Framework 2 applications\033[0m\n", ZFDEPLOY_VER);
+    printf("\033[33mZFDeploy %s - Deploy Zend Framework 2 applications\033[0m\n\n", ZFDEPLOY_VER);
 }
 
 /**
@@ -263,6 +282,7 @@ function printVersion()
 function printUsage($usage)
 {
     printVersion();
+    printf("\033[32m%s <package file> [options]\033[0m\n", basename(__FILE__));
     printf("%s\n", $usage);
     printf("\033[37mCopyright 2014-%s by Zend Technologies Ltd. - http://framework.zend.com\033[0m\n", date("Y"));
 }

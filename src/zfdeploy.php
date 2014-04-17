@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 /**
  * Deploy Zend Framework 2 application (Apigility support included)

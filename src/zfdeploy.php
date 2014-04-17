@@ -8,7 +8,7 @@
  */
 use Zend\Console\Getopt;
 
-define ('ZFDEPLOY_VER', '0.1');
+define ('ZFDEPLOY_VER', '@package_version@');
 ini_set('user_agent', 'ZFDeploy - deploy ZF2 applications, command line tool');
 $validFormat = array('zip', 'tar', 'tgz', 'tar\.gz', 'zpk');
 

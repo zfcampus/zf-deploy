@@ -1,0 +1,17 @@
+{
+    "chmod": "0755",
+    "directories": [
+        "src"
+    ],
+    "finder": [
+        {
+            "name": "*.php",
+            "exclude": ["tests"],
+            "in": "vendor"
+        }
+    ],
+    "git-version": "package_version",
+    "main": "bin/zfdeploy.php",
+    "output": "zfdeploy.phar",
+    "stub": true
+}

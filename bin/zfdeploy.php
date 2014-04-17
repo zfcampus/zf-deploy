@@ -24,7 +24,7 @@ if (!is_dir($appPath)) {
     exit(1);
 }
 
-$appAbsolutePath = realpath($appPath);
+$fileOut = realpath($appPath) . DIRECTORY_SEPARATOR . $fileOut;
 
 // Check for a valid ZF2 application in $appPath
 $appConfig = @require $appPath . '/config/application.config.php';
@@ -233,8 +233,6 @@ if (!isset($vendor) && $composer) {
 if ($format === 'zpk') {
     $tmpDir = dirname($tmpDir);
 }
-
-$fileOut = $appAbsolutePath . DIRECTORY_SEPARATOR . $fileOut;
 
 if (!createPackage($fileOut, $tmpDir, $format)) {
     printf("\033[31mError during the package creation.\033[0m\n");

@@ -99,6 +99,8 @@ class Deploy
         if (false === $this->parseArgs($args)) {
             return (null !== $this->exitStatus) ? $this->exitStatus : 1;
         }
+printf("Received arguments:\n%s\n", $this->getopt->toString());
+return 0;
 
         $opts = $this->getopt;
 
@@ -239,7 +241,13 @@ class Deploy
             return $this->reportError('One or more options were incorrect.', $usage = true);
         }
 
-        // 5. Set default values for composer/gitignore
+        // 5. Set default values for target/composer/gitignore
+        if (!$opts->target) {
+            if (!$this->validateApplicationPath(getcwd(), $opts)) {
+                return false;
+            }
+            $opts->target = getcwd();
+        }
         $opts->composer  = ($opts->composer === 'off')  ? false : true;
         $opts->gitignore = ($opts->gitignore === 'off') ? false : true;
 
@@ -331,11 +339,6 @@ class Deploy
 
     public function validateApplicationPath($value, Getopt $getopt)
     {
-        // Was it passed? If not, set to getcwd
-        if (!$value) {
-            $value = getcwd();
-        }
-
         // Is it a directory? (if not, error!)
         if (!is_dir($value)) {
             return $this->reportError(sprintf('Error: the application path "%s" is not valid', $value));

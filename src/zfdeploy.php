@@ -45,6 +45,13 @@ if (isset($opts->version)) {
 $appPath = $opts->target;
 $fileOut = $opts->output;
 
+if (! $appPath || ! $fileOut) {
+    $usage = $opts->getUsageMessage();
+    $usage .= sprintf("\n\033[31mError: both the target and output arguments are required.\033[0m\n");
+    printUsage($usage);
+    exit(1);
+}
+
 if (!is_dir($appPath)) {
     printf("\033[31mError: the path %s is not valid\033[0m\n", $appPath);
     exit(1);
@@ -256,7 +263,6 @@ function printVersion()
 function printUsage($usage)
 {
     printVersion();
-    printf("\033[32mUsage: %s <options> \033[0m\n", basename(__FILE__));
     printf("%s\n", $usage);
     printf("\033[37mCopyright 2014-%s by Zend Technologies Ltd. - http://framework.zend.com\033[0m\n", date("Y"));
 }

@@ -52,6 +52,11 @@ class Deploy
      */
     protected $format;
 
+    /**
+     * CLI options
+     * 
+     * @var array
+     */
     protected $getoptRules = array(
         'help|h'            => 'This usage message',
         'version|v'         => 'Version of this script',
@@ -65,9 +70,21 @@ class Deploy
         'appversion|a-s'    => 'Specific application version to use for ZPK packages',
     );
 
+    /**
+     * Getopt behavior options
+     * 
+     * @var array
+     */
     protected $getoptOptions = array(
         Getopt::CONFIG_PARAMETER_SEPARATOR => ',', // auto-split , separated values
     );
+
+    /**
+     * Whether or not one or more options were marked as invalid.
+     * 
+     * @var bool
+     */
+    protected $invalid = false;
 
     /**
      * Name of script executing the functionality
@@ -76,6 +93,11 @@ class Deploy
      */
     protected $scriptName;
 
+    /**
+     * Valid package file extensions
+     * 
+     * @var array
+     */
     protected $validExtensions = array(
         'zip',
         'tar',
@@ -84,6 +106,10 @@ class Deploy
         'zpk',
     );
 
+    /**
+     * @param mixed $scriptName 
+     * @param ConsoleAdapter $console 
+     */
     public function __construct($scriptName, ConsoleAdapter $console)
     {
         $this->scriptName = $scriptName;
@@ -92,15 +118,24 @@ class Deploy
         $this->setupOptionCallbacks();
     }
 
+    /**
+     * Perform all operations
+     *
+     * Facade method that accepts incoming CLI arguments, parses them, and
+     * determines what workflows to execute.
+     * 
+     * @param array $args 
+     * @return int exit status
+     */
     public function execute(array $args)
     {
+        $this->resetStateForExecution();
+
         $this->setProcessTitle();
 
-        if (false === $this->parseArgs($args)) {
+        if (false === $this->parseArgs($args) || $this->invalid) {
             return (null !== $this->exitStatus) ? $this->exitStatus : 1;
         }
-printf("Received arguments:\n%s\n", $this->getopt->toString());
-return 0;
 
         $opts = $this->getopt;
 
@@ -115,7 +150,6 @@ return 0;
         }
 
         $this->console->writeLine(sprintf('Creating package "%s"...', $opts->package), Color::BLUE);
-        $this->console->writeLine('');
 
         if (false === ($tmpDir = $this->createTmpDir())) {
             return 1;
@@ -134,15 +168,15 @@ return 0;
         $this->cloneApplication($opts->target, $tmpDir, $opts->gitignore, $opts->vendor, $opts->modules);
         $this->copyModules($opts->modules, $opts->target, $tmpDir);
 
-        if (false === $this->executeComposer($opts->vendor, $opts->composer)) {
+        if (false === $this->executeComposer($opts->vendor, $opts->composer, $tmpDir)) {
             return 1;
         }
 
-        if (false === $this->createPackage($opts->package, $tmpDir, $format)) {
+        if (false === $this->createPackage($opts->package, $tmpDir, $this->format)) {
             return 1;
         }
 
-        self::recursiveDelete($format === 'zpk' ? dirname($tmpDir) : $tmpDir);
+        self::recursiveDelete($this->format === 'zpk' ? dirname($tmpDir) : $tmpDir);
 
         $this->console->writeLine(sprintf(
             '[DONE] Package %s successfully created (%d bytes)',
@@ -153,6 +187,9 @@ return 0;
         return 0;
     }
 
+    /**
+     * Sets up callbacks for named getopt options, allowing further validation.
+     */
     protected function setupOptionCallbacks()
     {
         $self = $this;
@@ -173,14 +210,28 @@ return 0;
         $opts->setOptionCallback('deploymentxml', function ($value, $getopt) use ($self) {
             return $self->validateDeploymentXml($value, $getopt);
         });
-
-        $opts->setOptionCallback('appversion', function ($value, $getopt) use ($self) {
-            return $self->validateAppVersion($value, $getopt);
-        });
     }
 
+    /**
+     * Report an error
+     *
+     * Marks the current state as invalid, and emits an error message to the
+     * console.
+     *
+     * If the $usage flag is true, also prints usage.
+     *
+     * Allows passing in a specific color to use when emitting the error
+     * message; defaults to red.
+     * 
+     * @param string $message 
+     * @param bool $usage 
+     * @param string $color 
+     * @return false
+     */
     protected function reportError($message, $usage = false, $color = Color::RED)
     {
+        $this->invalid = true;
+
         $this->console->writeLine($message, $color);
 
         if ($usage) {
@@ -190,6 +241,11 @@ return 0;
         return false;
     }
 
+    /**
+     * Set the console process title
+     *
+     * Only for 5.5 and above.
+     */
     protected function setProcessTitle()
     {
         if (version_compare(PHP_VERSION, '5.5', 'lt')) {
@@ -199,6 +255,27 @@ return 0;
         cli_set_process_title(static::PROCESS_TITLE);
     }
 
+    /**
+     * Parse incoming arguments
+     *
+     * No arguments: print usage.
+     *
+     * First argument is the script and the only argument: print usage.
+     * Otherwise, shift it off and continue.
+     *
+     * First argument is the package name: pass remaining arguments to Getopt,
+     * and assign the package name to getopts on completion.
+     *
+     * First argument is an option: pass all arguments to Getopt.
+     *
+     * If getopt raises an exception, report usage.
+     *
+     * On successful completion, set argument defaults for arguments that
+     * were not passed, and return.
+     * 
+     * @param array $args 
+     * @return bool
+     */
     protected function parseArgs(array $args)
     {
         if (0 === count($args)) {
@@ -241,26 +318,37 @@ return 0;
             return $this->reportError('One or more options were incorrect.', $usage = true);
         }
 
-        // 5. Set default values for target/composer/gitignore
-        if (!$opts->target) {
+        // 5. Set default values
+        if (! $opts->target
+            && ! $opts->help
+            && ! $opts->version
+        ) {
             if (!$this->validateApplicationPath(getcwd(), $opts)) {
                 return false;
             }
             $opts->target = getcwd();
         }
-        $opts->composer  = ($opts->composer === 'off')  ? false : true;
-        $opts->gitignore = ($opts->gitignore === 'off') ? false : true;
+        $opts->composer   = ($opts->composer === 'off')  ? false : true;
+        $opts->gitignore  = ($opts->gitignore === 'off') ? false : true;
+        $opts->appversion = $opts->appversion ?: date('Y-m-d_H:i');
+        $opts->modules    = is_string($opts->modules) ? array($opts->modules) : $opts->modules;
 
         // 6. No errors: return true.
         return true;
     }
 
+    /**
+     * Emit the script version
+     */
     protected function printVersion()
     {
         $this->console->writeLine(sprintf('ZFDeploy %s - Deploy Zend Framework 2 applications', static::VERSION), Color::GREEN);
         $this->console->writeLine('');
     }
 
+    /**
+     * Emit the usage message
+     */
     protected function printUsage()
     {
         $this->printVersion();
@@ -269,6 +357,13 @@ return 0;
         $this->console->writeLine(sprintf('Copyright %s by Zend Technologies Ltd. - http://framework.zend.com/', date('Y')));
     }
 
+    /**
+     * Validate a deployment XML file against a schema
+     * 
+     * @param string $file 
+     * @param string $schema 
+     * @return bool
+     */
     protected function validateXml($file, $schema)
     {
         if (!file_exists($file)) {
@@ -288,6 +383,16 @@ return 0;
         return true;
     }
 
+    /**
+     * Validate the package file argument
+     *
+     * Determines the format, and, if the package file is valid, sets the
+     * format for this invocation.
+     * 
+     * @param string $value 
+     * @param Getopt $getopt 
+     * @return bool
+     */
     public function validatePackageFile($value, Getopt $getopt)
     {
         // Do we have a package filename?
@@ -302,8 +407,7 @@ return 0;
 
         // Do we have a valid extension? (if not, error! if so, set $format)
         $format = false;
-        $validFormat = array('zip', 'tar', 'tgz', 'tar.gz', 'zpk');
-        foreach ($validFormat as $extension) {
+        foreach ($this->validExtensions as $extension) {
             $pattern = '/\.' . preg_quote($extension) . '$/';
             if (preg_match($pattern, $value)) {
                 $format = $extension;
@@ -337,6 +441,15 @@ return 0;
         return true;
     }
 
+    /**
+     * Validate the application path
+     *
+     * If valid, also sets the $appConfig property.
+     * 
+     * @param string $value 
+     * @param Getopt $getopt 
+     * @return bool
+     */
     public function validateApplicationPath($value, Getopt $getopt)
     {
         // Is it a directory? (if not, error!)
@@ -360,6 +473,13 @@ return 0;
         return true;
     }
 
+    /**
+     * Validate the modules list
+     *
+     * @param null|string|array $value 
+     * @param Getopt $getopt 
+     * @return bool
+     */
     public function validateModules($value, Getopt $getopt)
     {
         // Dependent on target value ($getopt->target)
@@ -375,7 +495,6 @@ return 0;
         // If string, cast to array
         if (is_string($value)) {
             $value = array($value);
-            $getopt->modules = $value;
         }
 
         // If not an array, report error
@@ -395,6 +514,13 @@ return 0;
         return true;
     }
 
+    /**
+     * Validate a submitted deployment.xml
+     * 
+     * @param string $value 
+     * @param Getopt $getopt 
+     * @return bool
+     */
     public function validateDeploymentXml($value, Getopt $getopt)
     {
         // Does the file exist? (if not, error!)
@@ -410,16 +536,13 @@ return 0;
         return true;
     }
 
-    public function validateAppVersion($value, Getopt $getopt)
-    {
-        // If not present, set default falue
-        if (!$value) {
-            $getopt->appversion = date('Y-m-d_H:i');
-        }
-
-        return true;
-    }
-
+    /**
+     * Create a temporary directory for packaging
+     *
+     * Returns the directory name on success.
+     * 
+     * @return string|false
+     */
     protected function createTmpDir()
     {
         $count = 0;
@@ -433,8 +556,108 @@ return 0;
         }
 
         mkdir($tmpDir);
+        return $tmpDir;
     }
 
+    /**
+     * Prepare ZPK files
+     *
+     * Sets up the required directory structure for a ZPK, including adding
+     * any desired scripts, the deployment.xml, and the logo.
+     *
+     * Returns the path to the data directory on completion.
+     *
+     * If the $format is not zpk, returns $tmpDir.
+     * 
+     * @param string $tmpDir 
+     * @param string $appname 
+     * @param string $version 
+     * @param string $format 
+     * @param string $deploymentXml 
+     * @return string|false
+     */
+    protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml)
+    {
+        if ('zpk' !== $format) {
+            return $tmpDir;
+        }
+
+        mkdir($tmpDir . '/data');
+        mkdir($tmpDir . '/scripts');
+        foreach (glob(__DIR__ . '/../config/zpk/scripts/*.php') as $script) {
+            copy($script, $tmpDir . '/scripts');
+        }
+
+        if (! $deploymentXml) {
+            $logo = $this->copyLogo($tmpDir);
+            if (false === ($deploymentXml = $this->prepareDeploymentXml($tmpDir, $appname, $logo, $version, $format))) {
+                return false;
+            }
+            return $tmpDir .= '/data';
+        }
+
+        copy($deploymentXml, $tmpDir . '/deployment.xml');
+        return $tmpDir .= '/data';
+    }
+
+    /**
+     * Copy the logo into the ZPK directory
+     *
+     * Determines whether to use a ZF2 or Apigility logo.
+     * 
+     * @param string $tmpDir 
+     * @return string The logo file name
+     */
+    protected function copyLogo($tmpDir)
+    {
+        $logoFile = __DIR__ . '/../config/zpk/logo/zf2-logo.png';
+        $logo = 'zf2-logo.png';
+
+        if (isset($this->appConfig['modules']) && in_array('ZF\Apigility', $this->appConfig['modules'])) {
+            $logoFile = __DIR__ . '/../config/zpk/logo/apigility-logo.png';
+            $logo = 'apigility-logo.png';
+        }
+
+        copy($logoFile, $tmpDir . '/' . $logo);
+        return $logo;
+    }
+
+    /**
+     * Prepares the default deployment XML
+     *
+     * Injects the application name, logo, and version, and then validates it 
+     * before returning.
+     * 
+     * @param string $tmpDir 
+     * @param string $appname 
+     * @param string $logo 
+     * @param string $version 
+     * @param string $format 
+     * @return bool
+     */
+    protected function prepareDeploymentXml($tmpDir, $appname, $logo, $version, $format)
+    {
+        $defaultDeployXml = __DIR__ . '/../config/zpk/deployment.xml';
+        $deployString = file_get_contents($defaultDeployXml);
+
+        $deployString = str_replace('{NAME}',     $appname,  $deployString);
+        $deployString = str_replace('{VERSION}',  $version,  $deployString);
+        $deployString = str_replace('{LOGO}',     $logo,     $deployString);
+
+        file_put_contents($tmpDir . '/deployment.xml', $deployString);
+
+        return $this->validateXml($defaultDeployXml, __DIR__ . '/../config/zpk/schema.xsd');
+    }
+
+    /**
+     * Clone the application into the build directory
+     * 
+     * @param array $applicationPath 
+     * @param array $tmpDir 
+     * @param bool $gitignore 
+     * @param bool $useVendor 
+     * @param array $modules 
+     */
     protected function cloneApplication($applicationPath, $tmpDir, $gitignore, $useVendor, $modules)
     {
         $exclude = array();
@@ -450,25 +673,46 @@ return 0;
         self::recursiveCopy($applicationPath, $tmpDir, $exclude, $gitignore);
     }
 
+    /**
+     * Copy modules into the build directory
+     *
+     * Only if specific modules were specified via the CLI arguments.
+     * 
+     * @param array $modules 
+     * @param string $applicationPath 
+     * @param string $tmpDir 
+     */
     protected function copyModules(array $modules = null, $applicationPath, $tmpDir)
     {
         if (! $modules) {
-            self::recursiveCopy($applicationPath . '/module', $tmpDir . '/module');
             return;
         }
 
         // copy modules
         foreach ($modules as $module) {
             $normalized = str_replace('\\','/', $module);
-            self::recursiveCopy($appPath . '/module/' . $normalized, $tmpDir . '/module/' . $normalized);
+            self::recursiveCopy($applicationPath . '/module/' . $normalized, $tmpDir . '/module/' . $normalized);
         }
     }
 
+    /**
+     * Perform a recursive copy of a directory
+     * 
+     * @param string $source 
+     * @param string $dest 
+     * @param array $exclude 
+     * @param bool $gitignore 
+     */
     protected static function recursiveCopy($source, $dest, $exclude = array(), $gitignore = true)
     {
         $dir = opendir($source);
+        if (false === $dir) {
+            // Unable to open the source directory; nothing to do
+            return;
+        }
+
         if ($gitignore && file_exists($source . '/.gitignore')) {
-            foreach (file($ource . '/.gitignore', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $git) {
+            foreach (file($source . '/.gitignore', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $git) {
                 if (is_file($source . '/' . $git)) {
                     $exclude[$source . '/' . $git] = true;
                     continue;
@@ -502,6 +746,12 @@ return 0;
         closedir($dir);
     }
 
+    /**
+     * Recursively delete a directory
+     * 
+     * @param string $dir 
+     * @return bool
+     */
     protected static function recursiveDelete($dir)
     {
         if (false === ($dh = @opendir($dir)))  {
@@ -538,10 +788,14 @@ return 0;
         }
 
         $composer = $this->getComposerExecutable($tmpDir);
+        $command  = sprintf('%s install --no-dev --prefer-dist --optimize-autoloader 2>&1', $composer);
+
+        $this->console->write('Executing ', Color::BLUE);
+        $this->console->writeLine($command);
 
         $curDir = getcwd();
         chdir($tmpDir);
-        $result = exec(printf('%s install --no-dev --prefer-dist --optimize-autoloader 2>&1', $composer));
+        $result = exec($command);
         chdir($curDir);
 
         if ($this->downloadedComposer) {
@@ -585,60 +839,18 @@ return 0;
         return 'composer.phar';
     }
 
-    protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml)
-    {
-        if ('zpk' !== $format) {
-            return $tmpDir;
-        }
-
-        mkdir($tmpDir . '/data');
-        mkdir($tmpDir . '/scripts');
-        foreach (glob(__DIR__ . '/../config/zpk/scripts/*.php') as $script) {
-            copy($script, $tmpDir . '/scripts');
-        }
-
-        if (! $deploymentXml) {
-            $logo = $this->copyLogo($tmpDir);
-            if (false === ($deploymentXml = $this->prepareDeploymentXml($tmpDir, $appname, $logo, $version, $format))) {
-                return false;
-            }
-            return $tmpDir .= '/data';
-        }
-
-        copy($deploymentXml, $tmpDir . '/deployment.xml');
-        return $tmpDir .= '/data';
-    }
-
-    protected function copyLogo($tmpDir)
-    {
-        $logoFile = __DIR__ . '/../config/zpk/logo/zf2-logo.png';
-        $logo = 'zf2-logo.png';
-
-        if (isset($this->appConfig['modules']) && in_array('ZF\Apigility', $this->appConfig['modules'])) {
-            $logoFile = __DIR__ . '/../config/zpk/logo/apigility-logo.png';
-            $logo = 'apigility-logo.png';
-        }
-
-        copy($logoFile, $tmpDir . '/' . $logo);
-        return $logo;
-    }
-
-    protected function prepareDeploymentXml($tmpDir, $appname, $logo, $version, $format)
-    {
-        $defaultDeployXml = __DIR__ . '/../config/zpk/deployment.xml';
-        $deployString = file_get_contents($defaultDeployXml);
-
-        $deployString = str_replace('{NAME}',     $appname,  $deployString);
-        $deployString = str_replace('{VERSION}',  $version,  $deployString);
-        $deployString = str_replace('{LOGO}',     $logo,     $deployString);
-
-        file_put_contents($tmpDir . '/deployment.xml', $deployString);
-
-        return $this->validateXml($defaultDeployXml, __DIR__ . '/../config/zpk/schema.xsd');
-    }
-
+    /**
+     * Create the package file
+     * 
+     * @param string $package 
+     * @param string $dir 
+     * @param string $format 
+     * @return bool
+     */
     protected function createPackage($package, $dir, $format)
     {
+        $this->console->writeLine('Creating package...', Color::BLUE);
+
         switch ($format) {
             case 'zpk':
                 $dir = dirname($dir);
@@ -647,9 +859,16 @@ return 0;
                 $packager->open($package, ZipArchive::CREATE);
                 break;
             case 'tar':
+                $pharFile = $package;
+                $packager = new PharData($pharFile);
+                break;
             case 'tar.gz':
+                $pharFile = dirname($package) . '/' . basename($package, '.tar.gz') . '.tar';
+                $packager = new PharData($pharFile);
+                break;
             case 'tgz':
-                $packager = new PharData($package);
+                $pharFile = dirname($package) . '/' . basename($package, '.tgz') . '.tar';
+                $packager = new PharData($pharFile);
                 break;
             default:
                 return $this->reportError(sprintf('Unknown package format "%s"', $format));
@@ -661,36 +880,57 @@ return 0;
             RecursiveIteratorIterator::LEAVES_ONLY
         );
 
+        $this->console->writeLine('Writing files...', Color::BLUE);
         // Remove the relative path
         $dirPos = strlen($dir) + 1;
-        foreach ($files as $name => $file) {
-            switch ($format) {
-                case 'zip':
-                case 'zpk':
-                case 'tar':
-                case 'tar.gz':
-                case 'tgz':
+        switch ($format) {
+            case 'zip':
+            case 'zpk':
+                foreach ($files as $name => $file) {
                     $packager->addFile($file, substr($file, $dirPos));
-                    break;
-            }
+                }
+                break;
+            case 'tar':
+            case 'tar.gz':
+            case 'tgz':
+                $packager->buildFromIterator($files, $dir);
+                break;
         }
 
         // Close and finalize the archive
+        $this->console->writeLine('Closing package...', Color::BLUE);
         switch ($format) {
             case 'zip':
             case 'zpk':
                 $packager->close();
                 break;
-            /**
-             * @todo check this against lines 114 - 117 and lines 458 - 467 of original
-             */
+            case 'tar':
+                unset($packager);
+                break;
             case 'tar.gz':
                 $packager->compress(Phar::GZ, '.tar.gz');
+                unset($packager);
+                unlink($pharFile);
                 break;
             case 'tgz':
                 $packager->compress(Phar::GZ, '.tgz');
+                unset($packager);
+                unlink($pharFile);
                 break;
         }
+
         return true;
+    }
+
+    /**
+     * Reset internal state for a new execution cycle
+     */
+    protected function resetStateForExecution()
+    {
+        $this->appConfig = array();
+        $this->downloadedComposer = null;
+        $this->exitStatus = null;
+        $this->format = null;
+        $this->invalid = false;
     }
 }

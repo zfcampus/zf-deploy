@@ -20,7 +20,7 @@ use ZipArchive;
 
 class Deploy
 {
-    const VERSION = '@package_version@';
+    const VERSION = '0.2.0dev';
 
     const PROCESS_TITLE = 'ZFDeploy';
 

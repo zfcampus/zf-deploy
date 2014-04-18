@@ -416,7 +416,7 @@ class Deploy
         }
         if (false === $format) {
             $this->reportError(sprintf('Error: package filename "%s" is of an unknown format', $value));
-            $this->console->writeLine(sprintf('Valid file formats are: %s', implode(', ', $validFormat)));
+            $this->console->writeLine(sprintf('Valid file formats are: %s', implode(', ', $this->validExtensions)));
             return false;
         }
 

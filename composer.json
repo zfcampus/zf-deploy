@@ -22,5 +22,10 @@
         "php": ">=5.3.23",
         "zendframework/zend-console": "~2.0"
     },
+    "autoload": {
+        "psr-4": {
+            "ZF\\Deploy\\": "src/"
+        }
+    },
     "bin": ["bin/zfdeploy.php"]
 }

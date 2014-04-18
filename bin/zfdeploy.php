@@ -5,9 +5,8 @@
  * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
-namespace ZF\Deploy;
-
 use Zend\Console\Console;
+use ZF\Deploy\Deploy;
 
 switch (true) {
     case (file_exists(__DIR__ . '/../vendor/autoload.php')):

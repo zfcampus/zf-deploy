@@ -67,6 +67,7 @@ class Deploy
         'composer|c-s'      => 'Whether or not to execute composer; "on" or "off" (on by default)',
         'gitignore|g-s'     => 'Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" (on by default)',
         'deploymentxml|d-s' => 'Path to a custom deployment.xml file to use for ZPK packages',
+        'zpkdata|z-s'       => 'Path to a directory containing zpk package assets (deployment.xml, logo, scripts, etc.)',
         'appversion|a-s'    => 'Specific application version to use for ZPK packages',
     );
 
@@ -160,7 +161,8 @@ class Deploy
             basename($opts->package, '.' . $this->format),
             $opts->appversion,
             $this->format,
-            $opts->deploymentxml))
+            $opts->deploymentxml,
+            $opts->zpkdata))
         ) {
             return 1;
         }
@@ -209,6 +211,10 @@ class Deploy
 
         $opts->setOptionCallback('deploymentxml', function ($value, $getopt) use ($self) {
             return $self->validateDeploymentXml($value, $getopt);
+        });
+
+        $opts->setOptionCallback('zpkdata', function ($value, $getopt) use ($self) {
+            return $self->validateZpkData($value, $getopt);
         });
     }
 
@@ -524,13 +530,40 @@ class Deploy
     public function validateDeploymentXml($value, Getopt $getopt)
     {
         // Does the file exist? (if not, error!)
-        if (!file_exists($opts->deploymentxml)) {
+        if (! file_exists($value)) {
             return $this->reportError(sprintf('Error: The deployment XML file "%s" does not exist', $value));
         }
 
         // Is the file valid? (if not, error!)
-        if (!$this->validateXml($value, __DIR__ . '/../config/zpk/schema.xsd')) {
+        if (! $this->validateXml($value, __DIR__ . '/../config/zpk/schema.xsd')) {
             return $this->reportError(sprintf('Error: The deployment XML file "%s" is not valid', $value));
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate a ZPK data directory
+     * 
+     * @param string $value 
+     * @param Getopt $getopt 
+     * @return bool
+     */
+    public function validateZpkData($value, Getopt $getopt)
+    {
+        // Does the directory exist? (if not, error!)
+        if (! file_exists($value) || ! is_dir($value)) {
+            return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not exist', $value));
+        }
+
+        // Does the directory contain a deployment.xml file? (if not, error!)
+        if (! file_exists($value . '/deployment.xml')) {
+            return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not contain a deployment.xml file', $value));
+        }
+
+        // Is the deployment.xml file valid? (if not, error!)
+        if (! $this->validateXml($value . '/deployment.xml', __DIR__ . '/../config/zpk/schema.xsd')) {
+            return $this->reportError(sprintf('Error: The deployment XML file "%s" is not valid', $value . '/deployment.xml'));
         }
 
         return true;
@@ -574,29 +607,47 @@ class Deploy
      * @param string $version 
      * @param string $format 
      * @param string $deploymentXml 
+     * @param string $zpkDataDir 
      * @return string|false
      */
-    protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml)
+    protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml, $zpkDataDir)
     {
         if ('zpk' !== $format) {
             return $tmpDir;
         }
 
-        mkdir($tmpDir . '/data');
-        mkdir($tmpDir . '/scripts');
-        foreach (glob(__DIR__ . '/../config/zpk/scripts/*.php') as $script) {
-            copy($script, $tmpDir . '/scripts');
+        $logo = '';
+
+        // ZPK data path provided; sync it in
+        if ($zpkDataDir) {
+            $deploymentXml = $zpkDataDir . '/deployment.xml';
+            self::recursiveCopy($zpkDataDir, $tmpDir);
         }
 
-        if (! $deploymentXml) {
-            $logo = $this->copyLogo($tmpDir);
-            if (false === ($deploymentXml = $this->prepareDeploymentXml($tmpDir, $appname, $logo, $version, $format))) {
-                return false;
+        // Create the data directory, if it doesn't exist
+        if (! is_dir($tmpDir . '/data')) {
+            mkdir($tmpDir . '/data');
+        }
+
+        // ZPK data path NOT provided; sync in defaults
+        if (! $zpkDataDir) {
+            mkdir($tmpDir . '/scripts');
+            foreach (glob(__DIR__ . '/../config/zpk/scripts/*.php') as $script) {
+                copy($script, $tmpDir . '/scripts');
             }
-            return $tmpDir .= '/data';
         }
 
-        copy($deploymentXml, $tmpDir . '/deployment.xml');
+        // No deployment.xml provided; use defaults
+        if (! $deploymentXml) {
+            $logo          = $this->copyLogo($tmpDir);
+            $deploymentXml = __DIR__ . '/../config/zpk/deployment.xml';
+        }
+
+        // Prepare deployment.xml
+        if (false === $this->prepareDeploymentXml($deploymentXml, $tmpDir, $appname, $logo, $version, $format)) {
+            return false;
+        }
+
         return $tmpDir .= '/data';
     }
 
@@ -635,18 +686,18 @@ class Deploy
      * @param string $format 
      * @return bool
      */
-    protected function prepareDeploymentXml($tmpDir, $appname, $logo, $version, $format)
+    protected function prepareDeploymentXml($deploymentXml, $tmpDir, $appname, $logo, $version, $format)
     {
-        $defaultDeployXml = __DIR__ . '/../config/zpk/deployment.xml';
-        $deployString = file_get_contents($defaultDeployXml);
+        $deployString = file_get_contents($deploymentXml);
 
         $deployString = str_replace('{NAME}',     $appname,  $deployString);
         $deployString = str_replace('{VERSION}',  $version,  $deployString);
         $deployString = str_replace('{LOGO}',     $logo,     $deployString);
 
-        file_put_contents($tmpDir . '/deployment.xml', $deployString);
+        $packageLocation = $tmpDir . '/deployment.xml';
+        file_put_contents($packageLocation, $deployString);
 
-        return $this->validateXml($defaultDeployXml, __DIR__ . '/../config/zpk/schema.xsd');
+        return $this->validateXml($packageLocation, __DIR__ . '/../config/zpk/schema.xsd');
     }
 
     /**

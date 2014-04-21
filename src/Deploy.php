@@ -336,7 +336,11 @@ class Deploy
         if (! $opts->target
             && ! $opts->help
             && ! $opts->version
+            && ! $opts->selfupdate
         ) {
+            // If we do not have a target path, and none of help, version, or selfupdate were
+            // requested, validate whether or not the current working directory will work as
+            // a target.
             if (!$this->validateApplicationPath(getcwd(), $opts)) {
                 return false;
             }

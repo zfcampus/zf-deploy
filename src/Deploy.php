@@ -8,6 +8,8 @@ namespace ZF\Deploy;
 
 use DOMDocument;
 use FilesystemIterator;
+use Herrera\Phar\Update\Manager as UpdateManager;
+use Herrera\Phar\Update\Manifest as UpdateManifest;
 use Phar;
 use PharData;
 use RecursiveDirectoryIterator;
@@ -20,9 +22,9 @@ use ZipArchive;
 
 class Deploy
 {
-    const VERSION = '0.2.0-dev';
-
+    const MANIFEST_FILE = 'https://packages.zendframework.com/zf-deploy/manifest.json';
     const PROCESS_TITLE = 'ZFDeploy';
+    const VERSION = '0.2.0-dev';
 
     /**
      * Configuration for the application being packaged
@@ -69,6 +71,7 @@ class Deploy
         'deploymentxml|d-s' => 'Path to a custom deployment.xml file to use for ZPK packages',
         'zpkdata|z-s'       => 'Path to a directory containing zpk package assets (deployment.xml, logo, scripts, etc.)',
         'appversion|a-s'    => 'Specific application version to use for ZPK packages',
+        'selfupdate'        => '(phar version only) Update to the latest version of this tool',
     );
 
     /**
@@ -147,6 +150,11 @@ class Deploy
 
         if ($opts->help) {
             $this->printUsage();
+            return 0;
+        }
+
+        if ($opts->selfupdate) {
+            $this->updatePhar();
             return 0;
         }
 
@@ -361,6 +369,15 @@ class Deploy
         $this->console->writeLine(sprintf('%s <package file> [options]', $this->scriptName), Color::GREEN);
         $this->console->write($this->getopt->getUsageMessage());
         $this->console->writeLine(sprintf('Copyright %s by Zend Technologies Ltd. - http://framework.zend.com/', date('Y')));
+    }
+
+    /**
+     * Perform a self-update of a PHAR file
+     */
+    protected function updatePhar()
+    {
+        $manager = new UpdateManager(UpdateManifest::loadFile(self::MANIFEST_FILE));
+        $manager->update(self::VERSION, true, true);
     }
 
     /**

@@ -97,17 +97,18 @@ You can specify the file format directly in the `<filename>` using the proper ex
 The full syntax of `zfdeploy.php` includes:
 
 ```bash
-Usage: ./vendor/bin/zfdeploy.php [ options ]
---output|-o <string>            Output file package to create
---target|-t <string>            Path to application directory
+Usage: bin/zfdeploy.php [ options ]
+--help|-h                       This usage message
+--version|-v                    Version of this script
+--package|-p [ <string> ]       Filename of package to create; can be passed as first argument of script without the option
+--target|-t [ <string> ]        Path to application directory; assumes current working directory by default
 --modules|-m [ <string> ]       Comma-separated list of specific modules to deploy (all by default)
 --vendor|-e                     Whether or not to include the vendor directory (disabled by default)
 --composer|-c [ <string> ]      Whether or not to execute composer; "on" or "off" (on by default)
 --gitignore|-g [ <string> ]     Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" (on by default)
 --deploymentxml|-d [ <string> ] Path to a custom deployment.xml file to use for ZPK packages
+--zpkdata|-z [ <string> ]       Path to a directory containing zpk package assets (deployment.xml, logo, scripts, etc.)
 --appversion|-a [ <string> ]    Specific application version to use for ZPK packages
---version|-v                    Version of this script
---help|-h                       This usage message
 --selfupdate                    (phar version only) Update to the latest version of this tool
 ```
 
@@ -118,7 +119,7 @@ local configuration files, for instance the `local.php` file in the `/config/aut
 the `.gitignore` file using the `--gitignore off` option.
 
 > ### NOTE: if you disable the .gitignore usage
-> 
+>
 > If you disable the `.gitignore` using the `--gitignore off` option, all the files of the ZF2
 > application will be included in the package. **That means local configuration files, including
 > sensitive information like database credentials, are deployed in production!!!** Please consider
@@ -129,8 +130,8 @@ Another important part of the deployment of a ZF2 application is the usage of
 
 **ZFDeploy** executes the following composer command during the creation of the deployment package:
 
-```bash 
-$ php composer.phar install --no-dev --prefer-dist --optimize-autoloader 
+```bash
+$ php composer.phar install --no-dev --prefer-dist --optimize-autoloader
 ```
 
 The `--no-dev` flag ensures that development packages are not installed in the production

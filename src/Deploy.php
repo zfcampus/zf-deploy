@@ -182,6 +182,8 @@ class Deploy
             return 1;
         }
 
+        $this->removeTestDir($tmpDir . '/vendor');
+
         if (false === $this->createPackage($opts->package, $tmpDir, $this->format)) {
             return 1;
         }
@@ -764,6 +766,18 @@ class Deploy
         foreach ($modules as $module) {
             $normalized = str_replace('\\','/', $module);
             self::recursiveCopy($applicationPath . '/module/' . $normalized, $tmpDir . '/module/' . $normalized);
+        }
+    }
+
+    /** 
+     * Remove the Test directories in vendor for optimization
+     *
+     * @param string $vendorPath
+     */
+    protected function removeTestDir($vendorPath)
+    {
+        foreach (glob("$vendorPath/*/*/test") as $dir) {
+            self::recursiveDelete($dir);
         }
     }
 

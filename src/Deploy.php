@@ -770,13 +770,15 @@ class Deploy
     }
 
     /** 
-     * Remove the Test directories in vendor for optimization
+     * Remove the [tT]est/s directories in vendor for optimization
      *
      * @param string $vendorPath
      */
     protected function removeTestDir($vendorPath)
     {
-        foreach (glob("$vendorPath/*/*/test") as $dir) {
+        $testPath = $vendorPath . '/*/*/[tT]est';
+        $testDirs = array_merge(glob($testPath, GLOB_ONLYDIR), glob($testPath . 's', GLOB_ONLYDIR));
+        foreach ($testDirs as $dir) {
             self::recursiveDelete($dir);
         }
     }

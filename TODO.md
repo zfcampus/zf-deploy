@@ -8,5 +8,5 @@ TODO
 - ~~Deploy an Apigility application produced by the Admin UI (tested with this PR: https://github.com/zfcampus/zf-apigility-skeleton/pull/53)~~
 - ~~Check if the development mode is disabled in production for Apigility~~
 - Write the tests
-- Test the script in a Windows environment
-- Remove the /vendor/*/*/test folders in the deploy package for optimization
+- ~~Test the script in a Windows environment~~
+- ~~Remove the /vendor/*/*/test folders in the deploy package for optimization~~

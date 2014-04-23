@@ -119,7 +119,7 @@ local configuration files, for instance the `local.php` file in the `/config/aut
 the `.gitignore` file using the `--gitignore off` option.
 
 > ### NOTE: if you disable the .gitignore usage
-> 
+>
 > If you disable the `.gitignore` using the `--gitignore off` option, all the files of the ZF2
 > application will be included in the package. **That means local configuration files, including
 > sensitive information like database credentials, are deployed in production!!!** Please consider
@@ -130,8 +130,8 @@ Another important part of the deployment of a ZF2 application is the usage of
 
 **ZFDeploy** executes the following composer command during the creation of the deployment package:
 
-```bash 
-$ php composer.phar install --no-dev --prefer-dist --optimize-autoloader 
+```bash
+$ php composer.phar install --no-dev --prefer-dist --optimize-autoloader
 ```
 
 The `--no-dev` flag ensures that development packages are not installed in the production

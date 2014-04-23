@@ -154,7 +154,13 @@ class Deploy
         }
 
         if ($opts->selfupdate) {
-            $this->updatePhar();
+            $result = $this->updatePhar();
+            if (false === $result) {
+                $this->console->writeLine('No updates available.', Color::YELLOW);
+                return 0;
+            }
+            $this->console->write('Updated to version ');
+            $this->console->writeLine($result, Color::GREEN);
             return 0;
         }
 
@@ -382,8 +388,13 @@ class Deploy
      */
     protected function updatePhar()
     {
-        $manager = new UpdateManager(UpdateManifest::loadFile(self::MANIFEST_FILE));
-        $manager->update(self::VERSION, true, true);
+        $manifest = UpdateManifest::loadFile(self::MANIFEST_FILE);
+        $manager  = new UpdateManager($manifest);
+        if ($manager->update(self::VERSION, true, true)) {
+            $update = $manifest->findRecent();
+            return $update->getVersion();
+        }
+        return false;
     }
 
     /**

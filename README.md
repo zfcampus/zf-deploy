@@ -35,11 +35,16 @@ $ wget https://packages.zendframework.com/zf-deploy/zfdeploy.phar
 Or using your installed PHP binary:
 
 ```console
-php -r "file_put_contents('zfdeploy.phar', file_get_contents('https://packages.zendframework.com/zf-deploy/zfdeploy.phar'));"
+$ php -r "file_put_contents('zfdeploy.phar', file_get_contents('https://packages.zendframework.com/zf-deploy/zfdeploy.phar'));"
 ```
 
-Once you have the file, you can update it periodically to the latest version using the
-`--selfupdate` switch:
+Once you have the file, make it executable; in Unix-like systems:
+
+```console
+$ chmod 755 zfdeploy.phar
+```
+
+You can update the `phar` file periodically to the latest version using the `--selfupdate` switch:
 
 ```console
 $ zfdeploy.phar --selfupdate
@@ -75,7 +80,20 @@ Usage
 > `vendor/bin/zfdeploy.php`. If you install using the `phar` file, you will either need to put it on
 > your path or provide the full path to the `phar` file; the script name then is `zfdeploy.phar`.
 >
-> For our examples, we will reference the script as `zfdeploy`.
+> Depending on your environment, you may need to execute the `phar` file or `php` script using your
+> `php` executable:
+>
+> ```console
+> $ php bin/zfdeploy.php
+> $ php vendor/bin/zfdeploy.php
+> $ php zfdeploy.phar
+> ```
+>
+> In most Unix-like systems, if you have `/usr/bin/env` available, both the script and `phar` file
+> should be self-executable.
+>
+> For our examples, we will reference the script as `zfdeploy`, regardless of how you installed it
+> or how you determine you will need to execute it.
 
 The command line tool can be executed using the following command:
 

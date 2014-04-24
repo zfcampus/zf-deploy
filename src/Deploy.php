@@ -10,6 +10,7 @@ use DOMDocument;
 use FilesystemIterator;
 use Herrera\Phar\Update\Manager as UpdateManager;
 use Herrera\Phar\Update\Manifest as UpdateManifest;
+use KevinGH\Version\Version;
 use Phar;
 use PharData;
 use RecursiveDirectoryIterator;
@@ -391,7 +392,8 @@ class Deploy
         $manifest = UpdateManifest::loadFile(self::MANIFEST_FILE);
         $manager  = new UpdateManager($manifest);
         if ($manager->update(self::VERSION, true, true)) {
-            $update = $manifest->findRecent();
+            $version = new Version(self::VERSION);
+            $update = $manifest->findRecent($version);
             return $update->getVersion();
         }
         return false;

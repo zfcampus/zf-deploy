@@ -24,7 +24,7 @@ class Deploy
 {
     const MANIFEST_FILE = 'https://packages.zendframework.com/zf-deploy/manifest.json';
     const PROCESS_TITLE = 'ZFDeploy';
-    const VERSION = '0.2.0-dev';
+    const VERSION = '0.2.0';
 
     /**
      * Configuration for the application being packaged

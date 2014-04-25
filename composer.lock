@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "fda77f3c3c6175acb76be5d461beb9db",
+    "hash": "5189cef0b1c46f5f56aa2744afb4081d",
     "packages": [
         {
             "name": "herrera-io/json",
@@ -324,6 +324,59 @@
             "time": "2014-04-15 15:29:14"
         },
         {
+            "name": "zendframework/zend-filter",
+            "version": "2.3.1",
+            "target-dir": "Zend/Filter",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/Component_ZendFilter.git",
+                "reference": "1889b7aa499beccadac770780a73e1a40e0f8a53"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/Component_ZendFilter/zipball/1889b7aa499beccadac770780a73e1a40e0f8a53",
+                "reference": "1889b7aa499beccadac770780a73e1a40e0f8a53",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.23",
+                "zendframework/zend-stdlib": "self.version"
+            },
+            "require-dev": {
+                "zendframework/zend-crypt": "self.version",
+                "zendframework/zend-servicemanager": "self.version",
+                "zendframework/zend-uri": "self.version"
+            },
+            "suggest": {
+                "zendframework/zend-crypt": "Zend\\Crypt component",
+                "zendframework/zend-i18n": "Zend\\I18n component",
+                "zendframework/zend-servicemanager": "Zend\\ServiceManager component",
+                "zendframework/zend-uri": "Zend\\Uri component for UriNormalize filter"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.3-dev",
+                    "dev-develop": "2.4-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Zend\\Filter\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "provides a set of commonly needed data filters",
+            "keywords": [
+                "filter",
+                "zf2"
+            ],
+            "time": "2014-04-15 15:28:47"
+        },
+        {
             "name": "zendframework/zend-stdlib",
             "version": "2.3.1",
             "target-dir": "Zend/Stdlib",
@@ -372,6 +425,56 @@
                 "zf2"
             ],
             "time": "2014-04-15 15:28:48"
+        },
+        {
+            "name": "zfcampus/zf-console",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zfcampus/zf-console.git",
+                "reference": "43505b48a8b03436a0607ed378a377fe5068fabe"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zfcampus/zf-console/zipball/43505b48a8b03436a0607ed378a377fe5068fabe",
+                "reference": "43505b48a8b03436a0607ed378a377fe5068fabe",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.23",
+                "zendframework/zend-console": "~2.0"
+            },
+            "require-dev": {
+                "fabpot/php-cs-fixer": "*@dev",
+                "phpunit/phpunit": "3.7.*"
+            },
+            "suggest": {
+                "zendframework/zend-filter": "~2.0; Useful for filtering/normalizing argument values",
+                "zendframework/zend-validator": "~2.0; Useful for providing more thorough argument validation logic"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "ZF\\Console\\": "src/",
+                    "ZFTest\\Console\\": "test/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "Library for creating and dispatching console commands",
+            "homepage": "http://framework.zend.com/",
+            "keywords": [
+                "zend",
+                "zf2"
+            ],
+            "time": "2014-04-25 21:12:51"
         }
     ],
     "packages-dev": [
@@ -381,9 +484,9 @@
 
     ],
     "minimum-stability": "stable",
-    "stability-flags": [
-
-    ],
+    "stability-flags": {
+        "zfcampus/zf-console": 20
+    },
     "platform": {
         "php": ">=5.3.23"
     },

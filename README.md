@@ -44,10 +44,10 @@ Once you have the file, make it executable; in Unix-like systems:
 $ chmod 755 zfdeploy.phar
 ```
 
-You can update the `phar` file periodically to the latest version using the `--selfupdate` switch:
+You can update the `phar` file periodically to the latest version using the `self-update` command:
 
 ```console
-$ zfdeploy.phar --selfupdate
+$ zfdeploy.phar self-update
 ```
 
 ### Composer installation
@@ -98,36 +98,50 @@ Usage
 The command line tool can be executed using the following command:
 
 ```console
-$ zfdeploy <package filename>
+$ zfdeploy build <package>
 ```
 
-where `<package filename>` is the filename of the output package to produce. When run with no other
+where `<package>` is the filename of the output package to produce. When run with no other
 arguments, it assumes the current directory should be packaged; if you want to specify a different
-directory for packaging, use the `-t` switch:
+directory for packaging, use the `--target` flag:
 
 ```console
-$ zfdeploy <package filename> -t path/to/application
+$ zfdeploy build <package> --target path/to/application
 ```
 
-You can specify the file format directly in the `<filename>` using the proper extension (e.g.
+You can specify the file format directly in the `<package>` using the proper extension (e.g.
 `application.zip` will create a ZIP file).
 
-The full syntax of `zfdeploy.php` includes:
+`zfdeploy` includes the following commands:
 
-```bash
-Usage: bin/zfdeploy.php [ options ]
---help|-h                       This usage message
---version|-v                    Version of this script
---package|-p [ <string> ]       Filename of package to create; can be passed as first argument of script without the option
---target|-t [ <string> ]        Path to application directory; assumes current working directory by default
---modules|-m [ <string> ]       Comma-separated list of specific modules to deploy (all by default)
---vendor|-e                     Whether or not to include the vendor directory (disabled by default)
---composer|-c [ <string> ]      Whether or not to execute composer; "on" or "off" (on by default)
---gitignore|-g [ <string> ]     Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" (on by default)
---deploymentxml|-d [ <string> ] Path to a custom deployment.xml file to use for ZPK packages
---zpkdata|-z [ <string> ]       Path to a directory containing zpk package assets (deployment.xml, logo, scripts, etc.)
---appversion|-a [ <string> ]    Specific application version to use for ZPK packages
---selfupdate                    (phar version only) Update to the latest version of this tool
+```console
+$ zfdeploy
+ZFDeploy, version 0.3.0-dev
+
+Available commands:
+
+ build          Build a deployment package
+ help           Get help for individual commands
+ self-update    Updates zfdeploy.phar to the latest version
+ version        Display the version of the script
+```
+
+The full syntax of the `build` command includes:
+
+```console
+Usage:
+ build <package> [--target=] [--modules=] [--vendor|-v]:vendor [--composer=] [--gitignore=] [--deploymentxml=] [--zpkdata=] [--version=]
+
+Arguments:
+ <package>      Name of the package file to create; suffix must be .zip, .tar, .tar.gz, .tgz, or .zpk
+ --target       The target directory of the application to package; defaults to current working directory
+ --modules      Comma-separated list of modules to include in build
+ --vendor|-v    Whether or not to include the vendor directory (disabled by default)
+ --composer     Whether or not to execute composer; "on" or "off" ("on" by default)
+ --gitignore    Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" ("on" by default)
+ --deploymentxmlPath to a custom deployment.xml to use when building a ZPK package
+ --zpkdata      Path to a directory containing ZPK package assets (deployment.xml, logo, scripts, etc.)
+ --version      Specific application version to use for a ZPK package
 ```
 
 This deployment tool takes care of the local configuration files, related to the specific
@@ -160,3 +174,12 @@ by building a "class map".
 
 For more information about Composer, you can read the [Documentation](https://getcomposer.org/doc/)
 page of the project.
+
+Getting help
+------------
+
+The `help` command can list both the available commands, as well as provide the syntax for each
+command:
+
+- `zfdeploy help` will list all commands available.
+- `zfdeploy help <command>` will show usage for the named command.

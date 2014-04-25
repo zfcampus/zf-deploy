@@ -21,7 +21,9 @@
     "require": {
         "php": ">=5.3.23",
         "herrera-io/phar-update": "~1.0",
-        "zendframework/zend-console": "~2.0"
+        "zendframework/zend-console": "~2.0",
+        "zendframework/zend-filter": "~2.0",
+        "zfcampus/zf-console": "~1.0-dev"
     },
     "autoload": {
         "psr-4": {

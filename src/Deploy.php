@@ -8,31 +8,28 @@ namespace ZF\Deploy;
 
 use DOMDocument;
 use FilesystemIterator;
-use Herrera\Phar\Update\Manager as UpdateManager;
-use Herrera\Phar\Update\Manifest as UpdateManifest;
-use KevinGH\Version\Version;
 use Phar;
 use PharData;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use Zend\Console\Adapter\AdapterInterface as ConsoleAdapter;
+use Zend\Console\Adapter\AdapterInterface as Console;
 use Zend\Console\ColorInterface as Color;
-use Zend\Console\Exception\ExceptionInterface as GetoptException;
-use Zend\Console\Getopt;
+use ZF\Console\Route;
 use ZipArchive;
 
 class Deploy
 {
-    const MANIFEST_FILE = 'https://packages.zendframework.com/zf-deploy/manifest.json';
-    const PROCESS_TITLE = 'ZFDeploy';
-    const VERSION = '0.3.0-dev';
-
     /**
      * Configuration for the application being packaged
      *
      * @var array
      */
     protected $appConfig = array();
+
+    /**
+     * @var Console
+     */
+    protected $console;
 
     /**
      * Path to a downloaded composer.phar, if any
@@ -42,13 +39,6 @@ class Deploy
     protected $downloadedComposer;
 
     /**
-     * Allows setting an alternate exit status during the options parse stage.
-     *
-     * @var null|int
-     */
-    protected $exitStatus;
-
-    /**
      * Requested package file format
      *
      * @var string
@@ -56,54 +46,11 @@ class Deploy
     protected $format;
 
     /**
-     * CLI options
-     *
-     * @var array
-     */
-    protected $getoptRules = array(
-        'help|h'            => 'This usage message',
-        'version|v'         => 'Version of this script',
-        'package|p-s'       => 'Filename of package to create; can be passed as first argument of script without the option',
-        'target|t-s'        => 'Path to application directory; assumes current working directory by default',
-        'modules|m-s'       => 'Comma-separated list of specific modules to deploy (all by default)',
-        'vendor|e'          => 'Whether or not to include the vendor directory (disabled by default)',
-        'composer|c-s'      => 'Whether or not to execute composer; "on" or "off" (on by default)',
-        'gitignore|g-s'     => 'Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" (on by default)',
-        'deploymentxml|d-s' => 'Path to a custom deployment.xml file to use for ZPK packages',
-        'zpkdata|z-s'       => 'Path to a directory containing zpk package assets (deployment.xml, logo, scripts, etc.)',
-        'appversion|a-s'    => 'Specific application version to use for ZPK packages',
-        'selfupdate'        => '(phar version only) Update to the latest version of this tool',
-    );
-
-    /**
-     * Getopt behavior options
-     *
-     * @var array
-     */
-    protected $getoptOptions = array(
-        Getopt::CONFIG_PARAMETER_SEPARATOR => ',', // auto-split , separated values
-    );
-
-    /**
-     * Whether or not one or more options were marked as invalid.
-     *
-     * @var bool
-     */
-    protected $invalid = false;
-
-    /**
-     * Name of script executing the functionality
-     *
-     * @var string
-     */
-    protected $scriptName;
-
-    /**
      * Valid package file extensions
      *
      * @var array
      */
-    protected $validExtensions = array(
+    protected static $validExtensions = array(
         'zip',
         'tar',
         'tar.gz',
@@ -112,15 +59,13 @@ class Deploy
     );
 
     /**
-     * @param mixed $scriptName
-     * @param ConsoleAdapter $console
+     * Retrieve list of allowed extensions
+     *
+     * @return array
      */
-    public function __construct($scriptName, ConsoleAdapter $console)
+    public static function getValidExtensions()
     {
-        $this->scriptName = $scriptName;
-        $this->console = $console;
-        $this->getopt = new Getopt($this->getoptRules, array(), $this->getoptOptions);
-        $this->setupOptionCallbacks();
+        return static::$validExtensions;
     }
 
     /**
@@ -129,43 +74,30 @@ class Deploy
      * Facade method that accepts incoming CLI arguments, parses them, and
      * determines what workflows to execute.
      *
-     * @param array $args
-     * @return int exit status
+     * @param Route $route
+     * @param Console $console
+     * @return int Exit status
      */
-    public function execute(array $args)
+    public function __invoke(Route $route, Console $console)
     {
         $this->resetStateForExecution();
+        $this->console = $console;
 
-        $this->setProcessTitle();
+        $opts = (object) $route->getMatches();
 
-        if (false === $this->parseArgs($args) || $this->invalid) {
-            return (null !== $this->exitStatus) ? $this->exitStatus : 1;
+        if (! $this->validatePackage($opts->package)) {
+            return 1;
         }
 
-        $opts = $this->getopt;
-
-        if ($opts->version) {
-            $this->printVersion();
-            return 0;
+        if (! $this->validateApplicationPath($opts->target)) {
+            return 1;
         }
 
-        if ($opts->help) {
-            $this->printUsage();
-            return 0;
+        if (! $this->validateModules($opts->modules, $opts->target)) {
+            return 1;
         }
 
-        if ($opts->selfupdate) {
-            $result = $this->updatePhar();
-            if (false === $result) {
-                $this->console->writeLine('No updates available.', Color::YELLOW);
-                return 0;
-            }
-            $this->console->write('Updated to version ');
-            $this->console->writeLine($result, Color::GREEN);
-            return 0;
-        }
-
-        $this->console->writeLine(sprintf('Creating package "%s"...', $opts->package), Color::BLUE);
+        $console->writeLine(sprintf('Creating package "%s"...', $opts->package), Color::BLUE);
 
         if (false === ($tmpDir = $this->createTmpDir())) {
             return 1;
@@ -174,7 +106,7 @@ class Deploy
         if (false === ($tmpDir = $this->prepareZpk(
             $tmpDir,
             basename($opts->package, '.' . $this->format),
-            $opts->appversion,
+            $opts->version,
             $this->format,
             $opts->deploymentxml,
             $opts->zpkdata))
@@ -207,195 +139,18 @@ class Deploy
     }
 
     /**
-     * Sets up callbacks for named getopt options, allowing further validation.
-     */
-    protected function setupOptionCallbacks()
-    {
-        $self = $this;
-        $opts = $this->getopt;
-
-        $opts->setOptionCallback('package', function ($value, $getopt) use ($self) {
-            return $self->validatePackageFile($value, $getopt);
-        });
-
-        $opts->setOptionCallback('target', function ($value, $getopt) use ($self) {
-            return $self->validateApplicationPath($value, $getopt);
-        });
-
-        $opts->setOptionCallback('modules', function ($value, $getopt) use ($self) {
-            return $self->validateModules($value, $getopt);
-        });
-
-        $opts->setOptionCallback('deploymentxml', function ($value, $getopt) use ($self) {
-            return $self->validateDeploymentXml($value, $getopt);
-        });
-
-        $opts->setOptionCallback('zpkdata', function ($value, $getopt) use ($self) {
-            return $self->validateZpkData($value, $getopt);
-        });
-    }
-
-    /**
      * Report an error
-     *
-     * Marks the current state as invalid, and emits an error message to the
-     * console.
-     *
-     * If the $usage flag is true, also prints usage.
      *
      * Allows passing in a specific color to use when emitting the error
      * message; defaults to red.
      *
      * @param string $message
-     * @param bool $usage
      * @param string $color
      * @return false
      */
-    protected function reportError($message, $usage = false, $color = Color::RED)
+    protected function reportError($message, $color = Color::RED)
     {
-        $this->invalid = true;
-
         $this->console->writeLine($message, $color);
-
-        if ($usage) {
-            $this->printUsage();
-        }
-
-        return false;
-    }
-
-    /**
-     * Set the console process title
-     *
-     * Only for 5.5 and above.
-     */
-    protected function setProcessTitle()
-    {
-        if (version_compare(PHP_VERSION, '5.5', 'lt')) {
-            return;
-        }
-
-        cli_set_process_title(static::PROCESS_TITLE);
-    }
-
-    /**
-     * Parse incoming arguments
-     *
-     * No arguments: print usage.
-     *
-     * First argument is the script and the only argument: print usage.
-     * Otherwise, shift it off and continue.
-     *
-     * First argument is the package name: pass remaining arguments to Getopt,
-     * and assign the package name to getopts on completion.
-     *
-     * First argument is an option: pass all arguments to Getopt.
-     *
-     * If getopt raises an exception, report usage.
-     *
-     * On successful completion, set argument defaults for arguments that
-     * were not passed, and return.
-     *
-     * @param array $args
-     * @return bool
-     */
-    protected function parseArgs(array $args)
-    {
-        if (0 === count($args)) {
-            $this->exitStatus = 0;
-            $this->printUsage();
-            return false;
-        }
-
-        // 1. Remove first argument, if matches $scriptName.
-        $package = array_shift($args);
-        if (false !== strrpos($package, $this->scriptName)) {
-            if (0 === count($args)) {
-                $this->exitStatus = 0;
-                $this->printUsage();
-                return false;
-            }
-            $package = array_shift($args);
-        }
-
-        // 2. Check next argument to see if it's an option; if so, reset args array
-        if (0 === strpos($package, '-')) {
-            array_unshift($args, $package);
-            unset($package);
-        }
-
-        // 3. Add package argument
-        if (isset($package)) {
-            $args[] = '--package';
-            $args[] = $package;
-        }
-
-        // 4. Parse getopt
-        $opts = $this->getopt;
-        $opts->addArguments($args);
-
-        try {
-            $opts->parse();
-        } catch (GetoptException $e) {
-        // 4. If errors, set an error message, and return false.
-            return $this->reportError('One or more options were incorrect.', $usage = true);
-        }
-
-        // 5. Set default values
-        if (! $opts->target
-            && ! $opts->help
-            && ! $opts->version
-            && ! $opts->selfupdate
-        ) {
-            // If we do not have a target path, and none of help, version, or selfupdate were
-            // requested, validate whether or not the current working directory will work as
-            // a target.
-            if (!$this->validateApplicationPath(getcwd(), $opts)) {
-                return false;
-            }
-            $opts->target = getcwd();
-        }
-        $opts->composer   = ($opts->composer === 'off')  ? false : true;
-        $opts->gitignore  = ($opts->gitignore === 'off') ? false : true;
-        $opts->appversion = $opts->appversion ?: date('Y-m-d_H:i');
-        $opts->modules    = is_string($opts->modules) ? array($opts->modules) : $opts->modules;
-
-        // 6. No errors: return true.
-        return true;
-    }
-
-    /**
-     * Emit the script version
-     */
-    protected function printVersion()
-    {
-        $this->console->writeLine(sprintf('ZFDeploy %s - Deploy Zend Framework 2 applications', static::VERSION), Color::GREEN);
-        $this->console->writeLine('');
-    }
-
-    /**
-     * Emit the usage message
-     */
-    protected function printUsage()
-    {
-        $this->printVersion();
-        $this->console->writeLine(sprintf('%s <package file> [options]', $this->scriptName), Color::GREEN);
-        $this->console->write($this->getopt->getUsageMessage());
-        $this->console->writeLine(sprintf('Copyright %s by Zend Technologies Ltd. - http://framework.zend.com/', date('Y')));
-    }
-
-    /**
-     * Perform a self-update of a PHAR file
-     */
-    protected function updatePhar()
-    {
-        $manifest = UpdateManifest::loadFile(self::MANIFEST_FILE);
-        $manager  = new UpdateManager($manifest);
-        if ($manager->update(self::VERSION, true, true)) {
-            $version = new Version(self::VERSION);
-            $update = $manifest->findRecent($version);
-            return $update->getVersion();
-        }
         return false;
     }
 
@@ -408,17 +163,17 @@ class Deploy
      */
     protected function validateXml($file, $schema)
     {
-        if (!file_exists($file)) {
+        if (! file_exists($file)) {
             return $this->reportError(sprintf('The XML file "%s" does not exist.', $file));
         }
-        if (!file_exists($schema)) {
+        if (! file_exists($schema)) {
             return $this->reportError(sprintf('Error: The XML schema file "%s" does not exist.', $schema));
         }
 
         // Validate the deployment XML file
         $dom = new DOMDocument();
         $dom->loadXML(file_get_contents($file));
-        if (!$dom->schemaValidate($schema)) {
+        if (! $dom->schemaValidate($schema)) {
             return $this->reportError(sprintf('The XML file "%s" does not validate against the schema "%s".', $file, $schema));
         }
 
@@ -431,42 +186,24 @@ class Deploy
      * Determines the format, and, if the package file is valid, sets the
      * format for this invocation.
      *
-     * @param string $value
-     * @param Getopt $getopt
+     * @param string $package
      * @return bool
      */
-    public function validatePackageFile($value, Getopt $getopt)
+    protected function validatePackage($package)
     {
-        // Do we have a package filename?
-        if (!$value) {
-            return $this->reportError('Error: missing package filename', true);
-        }
-
         // Does the file already exist? (if so, error!)
-        if (file_exists($value)) {
-            return $this->reportError(sprintf('Error: package file "%s" already exists', $value));
+        if (file_exists($package)) {
+            return $this->reportError(sprintf('Error: package file "%s" already exists', $package));
         }
 
-        // Do we have a valid extension? (if not, error! if so, set $format)
-        $format = false;
-        foreach ($this->validExtensions as $extension) {
-            $pattern = '/\.' . preg_quote($extension) . '$/';
-            if (preg_match($pattern, $value)) {
-                $format = $extension;
-                break;
-            }
-        }
-        if (false === $format) {
-            $this->reportError(sprintf('Error: package filename "%s" is of an unknown format', $value));
-            $this->console->writeLine(sprintf('Valid file formats are: %s', implode(', ', $this->validExtensions)));
-            return false;
-        }
+        preg_match('#\.(?P<format>tar.gz|tar|tgz|zip|zpk)$#', $package, $matches);
+        $format = $matches['format'];
 
         // Do we have the PHP extension necessary for the file format? (if not, error!)
         switch ($format) {
             case 'zip':
             case 'zpk':
-                if (!extension_loaded('zip')) {
+                if (! extension_loaded('zip')) {
                     return $this->reportError('Error: the ZIP extension of PHP is not loaded.');
                 }
                 break;
@@ -474,11 +211,12 @@ class Deploy
             case 'tar':
             case 'tar.gz':
             case 'tgz':
-                if (!class_exists('PharData')) {
+                if (! class_exists('PharData')) {
                     return $this->reportError('Error: the Phar extension of PHP is not loaded.');
                 }
                 break;
         }
+
         $this->format = $format;
         return true;
     }
@@ -488,26 +226,25 @@ class Deploy
      *
      * If valid, also sets the $appConfig property.
      *
-     * @param string $value
-     * @param Getopt $getopt
+     * @param string $target
      * @return bool
      */
-    public function validateApplicationPath($value, Getopt $getopt)
+    protected function validateApplicationPath($target)
     {
         // Is it a directory? (if not, error!)
-        if (!is_dir($value)) {
-            return $this->reportError(sprintf('Error: the application path "%s" is not valid', $value));
+        if (! is_dir($target)) {
+            return $this->reportError(sprintf('Error: the application path "%s" is not valid', $target));
         }
 
         // Is it a valid ZF2 app? (if not, error!)
-        $appConfigPath = $value . '/config/application.config.php';
+        $appConfigPath = $target . '/config/application.config.php';
         if (! file_exists($appConfigPath)) {
-            return $this->reportError(sprintf('Error: the folder "%s" does not contain a standard ZF2 application', $value));
+            return $this->reportError(sprintf('Error: the folder "%s" does not contain a standard ZF2 application', $target));
         }
 
         $appConfig = include $appConfigPath;
-        if (!$appConfig || !isset($appConfig['modules'])) {
-            return $this->reportError(sprintf('Error: the folder "%s" does not contain a standard ZF2 application', $value));
+        if (! $appConfig || !isset($appConfig['modules'])) {
+            return $this->reportError(sprintf('Error: the folder "%s" does not contain a standard ZF2 application', $target));
         }
 
         // Set $this->appConfig when done
@@ -518,61 +255,23 @@ class Deploy
     /**
      * Validate the modules list
      *
-     * @param null|string|array $value
-     * @param Getopt $getopt
+     * @param array $modules
+     * @param string $target
      * @return bool
      */
-    public function validateModules($value, Getopt $getopt)
+    protected function validateModules(array $modules, $target)
     {
-        // Dependent on target value ($getopt->target)
-        if (!$getopt->target) {
-            return false;
-        }
-
         // If empty, done
-        if (null === $value) {
+        if (empty($modules)) {
             return true;
         }
 
-        // If string, cast to array
-        if (is_string($value)) {
-            $value = array($value);
-        }
-
-        // If not an array, report error
-        if (!is_array($value)) {
-            return false;
-        }
-
         // Validate each module
-        $appPath = $getopt->target;
-        foreach ($value as $module) {
+        foreach ($modules as $module) {
             $normalized = str_replace('\\','/', $module);
-            if (!is_dir($appPath . '/module/' . $normalized)) {
-                return $this->reportError(sprintf('Error: the module "%s" does not exist in %s', $module, $appPath));
+            if (! is_dir($target . '/module/' . $normalized)) {
+                return $this->reportError(sprintf('Error: the module "%s" does not exist in %s', $module, $target));
             }
-        }
-
-        return true;
-    }
-
-    /**
-     * Validate a submitted deployment.xml
-     *
-     * @param string $value
-     * @param Getopt $getopt
-     * @return bool
-     */
-    public function validateDeploymentXml($value, Getopt $getopt)
-    {
-        // Does the file exist? (if not, error!)
-        if (! file_exists($value)) {
-            return $this->reportError(sprintf('Error: The deployment XML file "%s" does not exist', $value));
-        }
-
-        // Is the file valid? (if not, error!)
-        if (! $this->validateXml($value, __DIR__ . '/../config/zpk/schema.xsd')) {
-            return $this->reportError(sprintf('Error: The deployment XML file "%s" is not valid', $value));
         }
 
         return true;
@@ -581,25 +280,19 @@ class Deploy
     /**
      * Validate a ZPK data directory
      *
-     * @param string $value
-     * @param Getopt $getopt
+     * @param string $dir
      * @return bool
      */
-    public function validateZpkData($value, Getopt $getopt)
+    protected function validateZpkDataDir($dir)
     {
         // Does the directory exist? (if not, error!)
-        if (! file_exists($value) || ! is_dir($value)) {
-            return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not exist', $value));
+        if (! file_exists($dir) || ! is_dir($dir)) {
+            return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not exist', $dir));
         }
 
         // Does the directory contain a deployment.xml file? (if not, error!)
-        if (! file_exists($value . '/deployment.xml')) {
-            return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not contain a deployment.xml file', $value));
-        }
-
-        // Is the deployment.xml file valid? (if not, error!)
-        if (! $this->validateXml($value . '/deployment.xml', __DIR__ . '/../config/zpk/schema.xsd')) {
-            return $this->reportError(sprintf('Error: The deployment XML file "%s" is not valid', $value . '/deployment.xml'));
+        if (! file_exists($dir . '/deployment.xml')) {
+            return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not contain a deployment.xml file', $dir));
         }
 
         return true;
@@ -655,6 +348,10 @@ class Deploy
         $logo = '';
 
         // ZPK data path provided; sync it in
+        if (! $this->validateZpkDataDir($zpkDataDir)) {
+            return false;
+        }
+
         if ($zpkDataDir) {
             $deploymentXml = $zpkDataDir . '/deployment.xml';
             self::recursiveCopy($zpkDataDir, $tmpDir);
@@ -771,7 +468,7 @@ class Deploy
      */
     protected function copyModules(array $modules = null, $applicationPath, $tmpDir)
     {
-        if (! $modules) {
+        if (empty($modules)) {
             return;
         }
 
@@ -825,7 +522,9 @@ class Deploy
             }
         }
 
-        @mkdir($dest, 0775, true);
+        if (! is_dir($dest)) {
+            mkdir($dest, 0775, true);
+        }
 
         while (false !== ( $file = readdir($dir)) ) {
             if ($file === '.' || $file === '..' || $file === '.git') {
@@ -1026,10 +725,8 @@ class Deploy
      */
     protected function resetStateForExecution()
     {
-        $this->appConfig = array();
+        $this->appConfig          = array();
         $this->downloadedComposer = null;
-        $this->exitStatus = null;
-        $this->format = null;
-        $this->invalid = false;
+        $this->format             = null;
     }
 }

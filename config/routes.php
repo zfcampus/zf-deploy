@@ -18,22 +18,6 @@ $booleanFilter = new CallbackFilter(function ($value) {
 });
 
 return array(
-    /*
-    array(
-        'name'  => '',
-        'route' => '',
-        'description' => '',
-        'shortDescription' => '',
-        'options_descriptions' => array(
-        ),
-        'constraints' => array(
-        ),
-        'aliases' => array(
-        ),
-        'defaults' => array(
-        ),
-    ),
-     */
     array(
         'name'  => 'self-update',
         'route' => 'self-update',
@@ -50,15 +34,15 @@ version, and, if found, downloads and installs the latest.',
         'description' => 'Create a deployment package named <package> based on the provided target directory.',
         'short_description' => 'Build a deployment package',
         'options_descriptions' => array(
-            'package'       => 'Name of the package file to create; suffix must be .zip, .tar, .tar.gz, .tgz, or .zpk',
-            'target'        => 'The target directory of the application to package; defaults to current working directory',
-            'modules'       => 'Comma-separated list of modules to include in build',
-            'vendor'        => 'Whether or not to include the vendor directory (disabled by default)',
-            'composer'      => 'Whether or not to execute composer; "on" or "off" ("on" by default)',
-            'gitignore'     => 'Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" ("on" by default)',
-            'deploymentxml' => 'Path to a custom deployment.xml to use when building a ZPK package',
-            'zpkdata'       => 'Path to a directory containing ZPK package assets (deployment.xml, logo, scripts, etc.)',
-            'version'       => 'Specific application version to use for a ZPK package',
+            '<package>'       => 'Name of the package file to create; suffix must be .zip, .tar, .tar.gz, .tgz, or .zpk',
+            '--target'        => 'The target directory of the application to package; defaults to current working directory',
+            '--modules'       => 'Comma-separated list of modules to include in build',
+            '--vendor|-v'     => 'Whether or not to include the vendor directory (disabled by default)',
+            '--composer'      => 'Whether or not to execute composer; "on" or "off" ("on" by default)',
+            '--gitignore'     => 'Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" ("on" by default)',
+            '--deploymentxml' => 'Path to a custom deployment.xml to use when building a ZPK package',
+            '--zpkdata'       => 'Path to a directory containing ZPK package assets (deployment.xml, logo, scripts, etc.)',
+            '--version'       => 'Specific application version to use for a ZPK package',
         ),
         'constraints' => array(
             'package'   => '#\.(' . implode('|', $extensions) . ')$#',

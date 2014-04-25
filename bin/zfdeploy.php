@@ -5,7 +5,6 @@
  * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
-use Zend\Console\ColorInterface as Color;
 use Zend\Console\Console;
 use ZF\Console\Application;
 use ZF\Console\Dispatcher;

@@ -5,8 +5,11 @@
  * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
+use Zend\Console\ColorInterface as Color;
 use Zend\Console\Console;
-use ZF\Deploy\Deploy;
+use ZF\Console\Application;
+use ZF\Console\Dispatcher;
+use ZF\Deploy\SelfUpdate;
 
 switch (true) {
     case (file_exists(__DIR__ . '/../vendor/autoload.php')):
@@ -25,6 +28,18 @@ switch (true) {
         throw new RuntimeException('Unable to locate Composer autoloader; please run "composer install".');
 }
 
-$deploy = new Deploy(basename(__FILE__), Console::getInstance());
-$status = $deploy->execute(array_slice($argv, 1));
-return $status;
+define('VERSION', '0.3.0-dev');
+
+$dispatcher  = new Dispatcher();
+$dispatcher->map('self-update', new SelfUpdate(VERSION));
+$dispatcher->map('build', 'ZF\Deploy\Deploy');
+
+$application = new Application(
+    'ZFDeploy',
+    VERSION,
+    include __DIR__ . '/../config/routes.php',
+    Console::getInstance(),
+    $dispatcher
+);
+$exit = $application->run();
+exit($exit);

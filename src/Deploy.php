@@ -20,13 +20,6 @@ use ZipArchive;
 class Deploy
 {
     /**
-     * Configuration for the application being packaged
-     *
-     * @var array
-     */
-    protected $appConfig = array();
-
-    /**
      * @var Console
      */
     protected $console;
@@ -82,7 +75,7 @@ class Deploy
             return 1;
         }
 
-        if (! $this->validateApplicationPath($opts->target)) {
+        if (! $this->validateApplicationPath($opts->target, $opts)) {
             return 1;
         }
 
@@ -102,7 +95,8 @@ class Deploy
             $opts->version,
             $opts->format,
             $opts->deploymentxml,
-            $opts->zpkdata))
+            $opts->zpkdata,
+            $opts->appConfig))
         ) {
             return 1;
         }
@@ -218,12 +212,13 @@ class Deploy
     /**
      * Validate the application path
      *
-     * If valid, also sets the $appConfig property.
+     * If valid, also sets the $appConfig property in $opts.
      *
      * @param string $target
+     * @param object $opts All options
      * @return bool
      */
-    protected function validateApplicationPath($target)
+    protected function validateApplicationPath($target, $opts)
     {
         // Is it a directory? (if not, error!)
         if (! is_dir($target)) {
@@ -242,7 +237,7 @@ class Deploy
         }
 
         // Set $this->appConfig when done
-        $this->appConfig = $appConfig;
+        $opts->appConfig = $appConfig;
         return true;
     }
 
@@ -331,9 +326,10 @@ class Deploy
      * @param string $format
      * @param string $deploymentXml
      * @param string $zpkDataDir
+     * @param array $zpkDataDir
      * @return string|false
      */
-    protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml, $zpkDataDir)
+    protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml, $zpkDataDir, array $appConfig)
     {
         if ('zpk' !== $format) {
             return $tmpDir;
@@ -366,7 +362,7 @@ class Deploy
 
         // No deployment.xml provided; use defaults
         if (! $deploymentXml) {
-            $logo          = $this->copyLogo($tmpDir);
+            $logo          = $this->copyLogo($tmpDir, $appConfig);
             $deploymentXml = __DIR__ . '/../config/zpk/deployment.xml';
         }
 
@@ -384,14 +380,15 @@ class Deploy
      * Determines whether to use a ZF2 or Apigility logo.
      *
      * @param string $tmpDir
+     * @param array $appConfig Application configuration
      * @return string The logo file name
      */
-    protected function copyLogo($tmpDir)
+    protected function copyLogo($tmpDir, array $appConfig)
     {
         $logoFile = __DIR__ . '/../config/zpk/logo/zf2-logo.png';
         $logo = 'zf2-logo.png';
 
-        if (isset($this->appConfig['modules']) && in_array('ZF\Apigility', $this->appConfig['modules'])) {
+        if (isset($appConfig['modules']) && in_array('ZF\Apigility', $appConfig['modules'])) {
             $logoFile = __DIR__ . '/../config/zpk/logo/apigility-logo.png';
             $logo = 'apigility-logo.png';
         }
@@ -725,7 +722,6 @@ class Deploy
      */
     protected function resetStateForExecution()
     {
-        $this->appConfig          = array();
         $this->downloadedComposer = null;
     }
 }

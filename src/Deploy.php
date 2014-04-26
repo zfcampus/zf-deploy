@@ -532,9 +532,7 @@ class Deploy
 
         if (! is_dir($dest)) {
             mkdir($dest, 0775, true);
-        }
-
-        while (false !== ( $file = readdir($dir)) ) {
+        } while (false !== ( $file = readdir($dir)) ) {
             if ($file === '.' || $file === '..' || $file === '.git') {
                 continue;
             }

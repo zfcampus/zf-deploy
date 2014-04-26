@@ -139,6 +139,7 @@ Arguments:
  --vendor|-v    Whether or not to include the vendor directory (disabled by default)
  --composer     Whether or not to execute composer; "on" or "off" ("on" by default)
  --gitignore    Whether or not to parse the .gitignore file to determine what files/folders to exclude; "on" or "off" ("on" by default)
+ --configs      Path to directory containing application config files to include in the package
  --deploymentxmlPath to a custom deployment.xml to use when building a ZPK package
  --zpkdata      Path to a directory containing ZPK package assets (deployment.xml, logo, scripts, etc.)
  --version      Specific application version to use for a ZPK package
@@ -174,6 +175,19 @@ by building a "class map".
 
 For more information about Composer, you can read the [Documentation](https://getcomposer.org/doc/)
 page of the project.
+
+> ### Note: production configuration
+>
+> Zend Framework 2 applications often include `{,*.}local.php` files in `config\autoload/`, which
+> are used to provide environment specific configuration. (In Apigility, this may include database
+> configuration, Authentication configuration, etc.). These files are omitted from version control
+> via `.gitignore` directives -- and, by default, from packaging.
+>
+> The settings you want for production will often differ from those in your development environment,
+> and you may push them to production in a variety of ways -- via Chef, Puppet, Ansible, etc.
+> Another option is to use the `--configs` flag when building your package. You can pass a directory
+> containing production configuration files, and these will then be included in your deployment
+> package.
 
 Getting help
 ------------

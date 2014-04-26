@@ -39,13 +39,6 @@ class Deploy
     protected $downloadedComposer;
 
     /**
-     * Requested package file format
-     *
-     * @var string
-     */
-    protected $format;
-
-    /**
      * Valid package file extensions
      *
      * @var array
@@ -85,7 +78,7 @@ class Deploy
 
         $opts = (object) $route->getMatches();
 
-        if (! $this->validatePackage($opts->package)) {
+        if (! $this->validatePackage($opts->package, $opts)) {
             return 1;
         }
 
@@ -105,9 +98,9 @@ class Deploy
 
         if (false === ($tmpDir = $this->prepareZpk(
             $tmpDir,
-            basename($opts->package, '.' . $this->format),
+            basename($opts->package, '.' . $opts->format),
             $opts->version,
-            $this->format,
+            $opts->format,
             $opts->deploymentxml,
             $opts->zpkdata))
         ) {
@@ -123,11 +116,11 @@ class Deploy
 
         $this->removeTestDir($tmpDir . '/vendor');
 
-        if (false === $this->createPackage($opts->package, $tmpDir, $this->format)) {
+        if (false === $this->createPackage($opts->package, $tmpDir, $opts->format)) {
             return 1;
         }
 
-        self::recursiveDelete($this->format === 'zpk' ? dirname($tmpDir) : $tmpDir);
+        self::recursiveDelete($opts->format === 'zpk' ? dirname($tmpDir) : $tmpDir);
 
         $this->console->writeLine(sprintf(
             '[DONE] Package %s successfully created (%d bytes)',
@@ -187,9 +180,10 @@ class Deploy
      * format for this invocation.
      *
      * @param string $package
+     * @param object $opts All options
      * @return bool
      */
-    protected function validatePackage($package)
+    protected function validatePackage($package, $opts)
     {
         // Does the file already exist? (if so, error!)
         if (file_exists($package)) {
@@ -217,7 +211,7 @@ class Deploy
                 break;
         }
 
-        $this->format = $format;
+        $opts->format = $format;
         return true;
     }
 
@@ -733,6 +727,5 @@ class Deploy
     {
         $this->appConfig          = array();
         $this->downloadedComposer = null;
-        $this->format             = null;
     }
 }

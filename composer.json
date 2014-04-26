@@ -23,7 +23,7 @@
         "herrera-io/phar-update": "~1.0",
         "zendframework/zend-console": "~2.0",
         "zendframework/zend-filter": "~2.0",
-        "zfcampus/zf-console": "~1.0-dev"
+        "zfcampus/zf-console": "dev-master"
     },
     "autoload": {
         "psr-4": {

@@ -114,7 +114,7 @@ class Deploy
             return 1;
         }
 
-        $this->cloneApplication($opts->target, $tmpDir, $opts->gitignore, $opts->vendor, $opts->modules);
+        $this->cloneApplication($opts->target, $tmpDir, $opts->gitignore, $opts->vendor, $opts->modules, $opts->configs);
         $this->copyModules($opts->modules, $opts->target, $tmpDir);
 
         if (false === $this->executeComposer($opts->vendor, $opts->composer, $tmpDir)) {
@@ -366,7 +366,7 @@ class Deploy
         if (! $zpkDataDir) {
             mkdir($tmpDir . '/scripts');
             foreach (glob(__DIR__ . '/../config/zpk/scripts/*.php') as $script) {
-                copy($script, $tmpDir . '/scripts');
+                copy($script, $tmpDir . '/scripts/' . basename($script));
             }
         }
 
@@ -441,8 +441,9 @@ class Deploy
      * @param bool $gitignore
      * @param bool $useVendor
      * @param array $modules
+     * @param false|string $configsPath
      */
-    protected function cloneApplication($applicationPath, $tmpDir, $gitignore, $useVendor, $modules)
+    protected function cloneApplication($applicationPath, $tmpDir, $gitignore, $useVendor, $modules, $configsPath)
     {
         $exclude = array();
         if (! $useVendor) {
@@ -455,6 +456,13 @@ class Deploy
         }
 
         self::recursiveCopy($applicationPath, $tmpDir, $exclude, $gitignore);
+
+        if ($configsPath && is_dir($configsPath)) {
+            $tmpConfigPath = $tmpDir . '/config/autoload/';
+            foreach (glob($configsPath . '/*.php') as $config) {
+                copy($config, $tmpConfigPath . basename($config));
+            }
+        }
     }
 
     /**

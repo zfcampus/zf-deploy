@@ -66,8 +66,7 @@ class Deploy
      */
     public function __invoke(Route $route, Console $console)
     {
-        $this->resetStateForExecution();
-        $this->console = $console;
+        $this->resetStateForExecution($console);
 
         $opts = (object) $route->getMatches();
 
@@ -720,8 +719,9 @@ class Deploy
     /**
      * Reset internal state for a new execution cycle
      */
-    protected function resetStateForExecution()
+    protected function resetStateForExecution(Console $console)
     {
+        $this->console = $console;
         $this->downloadedComposer = null;
     }
 }

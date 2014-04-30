@@ -275,6 +275,11 @@ class Deploy
      */
     protected function validateZpkDataDir($dir)
     {
+        // No ZPK data dir passed, nothing to do
+        if (empty($dir)) {
+            return true;
+        }
+
         // Does the directory exist? (if not, error!)
         if (! file_exists($dir) || ! is_dir($dir)) {
             return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not exist', $dir));

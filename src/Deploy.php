@@ -84,19 +84,21 @@ class Deploy
 
         $console->writeLine(sprintf('Creating package "%s"...', $opts->package), Color::BLUE);
 
-        if (false === ($tmpDir = $this->createTmpDir())) {
+        $tmpDir = $this->createTmpDir();
+        if (false === $tmpDir) {
             return 1;
         }
 
-        if (false === ($tmpDir = $this->prepareZpk(
+        $tmpDir = $this->prepareZpk(
             $tmpDir,
             basename($opts->package, '.' . $opts->format),
             $opts->version,
             $opts->format,
             $opts->deploymentxml,
             $opts->zpkdata,
-            $opts->appConfig))
-        ) {
+            $opts->appConfig
+        );
+        if (false === $tmpDir) {
             return 1;
         }
 
@@ -273,6 +275,11 @@ class Deploy
      */
     protected function validateZpkDataDir($dir)
     {
+        // No ZPK data dir passed, nothing to do
+        if (empty($dir)) {
+            return true;
+        }
+
         // Does the directory exist? (if not, error!)
         if (! file_exists($dir) || ! is_dir($dir)) {
             return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not exist', $dir));

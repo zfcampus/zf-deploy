@@ -514,36 +514,57 @@ class Deploy
             return;
         }
 
-        if ($gitignore && file_exists($source . '/.gitignore')) {
-            foreach (file($source . '/.gitignore', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $git) {
-                if (is_file($source . '/' . $git)) {
-                    $exclude[$source . '/' . $git] = true;
+        $gitignoreFile = sprintf('%s/.gitignore', $source);
+        if ($gitignore && file_exists($gitignoreFile)) {
+            foreach (file($gitignoreFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $git) {
+                $exclusionFile = sprintf('%s/%s', $source, $git);
+
+                if (is_file($exclusionFile)) {
+                    $exclude[$exclusionFile] = true;
                     continue;
                 }
 
-                foreach(glob($source . '/' . $git) as $file) {
+                foreach (glob($exclusionFile) as $file) {
                     $exclude[$file] = true;
                 }
             }
         }
 
         if (! is_dir($dest)) {
-            mkdir($dest, 0775, true);
-        } while (false !== ( $file = readdir($dir)) ) {
+            // Ensure permissions match those of source, unless source is not writable
+            // (we have to be able to write to the destination directory!)
+            $dirperms = fileperms($source);
+            if (! is_writable($source)) {
+                $dirperms = 0775;
+            }
+
+            // See http://stackoverflow.com/a/6229447/31459
+            // umask() hack needed to ensure permissions we set are honored.
+            $umask = umask(0); 
+            mkdir($dest, $dirperms, true);
+            umask($umask); // Restore original umask when done
+        }
+
+        while (false !== ($file = readdir($dir))) {
             if ($file === '.' || $file === '..' || $file === '.git') {
                 continue;
             }
 
-            if (isset($exclude[$source . '/' . $file]) && $exclude[$source . '/' . $file]) {
+            $sourceFile = sprintf('%s/%s', $source, $file);
+            if (isset($exclude[$sourceFile]) && $exclude[$sourceFile]) {
                 continue;
             }
 
-            if (is_dir($source . '/' . $file)) {
-                self::recursiveCopy($source . '/' . $file, $dest . '/' . $file, $exclude);
+            $destFile = sprintf('%s/%s', $dest, $file);
+            if (is_dir($sourceFile)) {
+                self::recursiveCopy($sourceFile, $destFile, $exclude);
                 continue;
             }
 
-            copy($source . '/' . $file, $dest . '/' . $file);
+            copy($sourceFile, $destFile);
+
+            // Ensure permissions match those of source
+            chmod($destFile, fileperms($sourceFile));
         }
 
         closedir($dir);

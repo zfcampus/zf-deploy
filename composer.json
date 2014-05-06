@@ -16,6 +16,9 @@
     "extra": {
         "branch-alias": {
             "dev-master": "1.0-dev"
+        },
+        "branch-alias": {
+            "dev-develop": "1.1-dev"
         }
     },
     "require": {
@@ -24,7 +27,7 @@
         "herrera-io/phar-update": "~1.0",
         "zendframework/zend-console": "~2.0",
         "zendframework/zend-filter": "~2.0",
-        "zfcampus/zf-console": "~1.0-dev"
+        "zfcampus/zf-console": "~1.0"
     },
     "autoload": {
         "psr-4": {

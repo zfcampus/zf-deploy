@@ -23,7 +23,7 @@ class SelfUpdate
     protected $version;
 
     /**
-     * @param mixed $version 
+     * @param mixed $version
      */
     public function __construct($version)
     {
@@ -32,9 +32,9 @@ class SelfUpdate
 
     /**
      * Perform a self-update on the phar file
-     * 
-     * @param Route $route 
-     * @param Console $console 
+     *
+     * @param Route $route
+     * @param Console $console
      * @return int
      */
     public function __invoke(Route $route, Console $console)

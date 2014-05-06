@@ -540,12 +540,10 @@ class Deploy
 
             // See http://stackoverflow.com/a/6229447/31459
             // umask() hack needed to ensure permissions we set are honored.
-            $umask = umask(0); 
+            $umask = umask(0);
             mkdir($dest, $dirperms, true);
             umask($umask); // Restore original umask when done
-        }
-
-        while (false !== ($file = readdir($dir))) {
+        } while (false !== ($file = readdir($dir))) {
             if ($file === '.' || $file === '..' || $file === '.git') {
                 continue;
             }
@@ -578,7 +576,7 @@ class Deploy
      */
     protected static function recursiveDelete($dir)
     {
-        if (false === ($dh = @opendir($dir)))  {
+        if (false === ($dh = @opendir($dir))) {
             return false;
         } while (false !== ($obj = readdir($dh))) {
             if ($obj == '.' || $obj == '..') {

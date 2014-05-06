@@ -1,6 +1,11 @@
 ZFDeploy - deploy ZF2 applications
 ==================================
 
+[![Build Status](https://travis-ci.org/zfcampus/zf-deploy.png)](https://travis-ci.org/zfcampus/zf-deploy)
+
+Introduction
+------------
+
 **ZFDeploy** is a command line tool to deploy [Zend Framework 2](http://framework.zend.com) applications.
 
 This tool produces a file package ready to be deployed. The tool supports the following format:

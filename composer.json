@@ -20,6 +20,7 @@
     },
     "require": {
         "php": ">=5.3.23",
+        "fabpot/php-cs-fixer": "*@dev",
         "herrera-io/phar-update": "~1.0",
         "zendframework/zend-console": "~2.0",
         "zendframework/zend-filter": "~2.0",

@@ -555,7 +555,7 @@ class Deploy
 
             $destFile = sprintf('%s/%s', $dest, $file);
             if (is_dir($sourceFile)) {
-                self::recursiveCopy($sourceFile, $destFile, $exclude);
+                self::recursiveCopy($sourceFile, $destFile, $exclude, $gitignore);
                 continue;
             }
 

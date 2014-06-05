@@ -482,6 +482,13 @@ class Deploy
             $normalized = str_replace('\\','/', $module);
             self::recursiveCopy($applicationPath . '/module/' . $normalized, $tmpDir . '/module/' . $normalized);
         }
+        
+        // enable only the selected modules in the config/application.config.php
+        if (file_exists($tmpDir . '/config/application.config.php')) {
+        	$config = include $tmpDir . '/config/application.config.php';
+        	$config['modules'] = $modules;
+        	file_put_contents($tmpDir . '/config/application.config.php', '<?php return ' . var_export($config, true) . ';');
+        }
     }
 
     /**

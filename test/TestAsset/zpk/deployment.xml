@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package version="2.0" xmlns="http://www.zend.com/server/deployment-descriptor/1.0">
+<type>test</type>
+<name>test</name>
+<summary>Testing application</summary>
+<version>
+<release>1.0</release>
+</version>
+<appdir>data</appdir>
+<docroot>data</docroot>
+</package>

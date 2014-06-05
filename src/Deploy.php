@@ -615,7 +615,7 @@ class Deploy
 
         $curDir = getcwd();
         chdir($tmpDir);
-        $result = exec($command);
+        $result = exec($command, $output, $exitCode);
         chdir($curDir);
 
         if ($this->downloadedComposer) {
@@ -623,8 +623,8 @@ class Deploy
             unset($this->downloadedComposer);
         }
 
-        if (empty($result)) {
-            return $this->reportError('Composer error during install command');
+        if ($exitCode !== 0) {
+            return $this->reportError('Composer error during install command (exit code: ' . $exitCode . ') ' . $result);
         }
     }
 
@@ -640,23 +640,30 @@ class Deploy
      */
     protected function getComposerExecutable($tmpDir)
     {
-        $result = exec('composer 2>&1');
-        if (! empty($result)) {
+        exec('composer 2>&1', $output, $exitCode);
+        if ($exitCode === 0) {
             return 'composer';
         }
 
         if (file_exists($tmpDir . '/composer.phar')) {
+            $this->console->writeLine('composer.phar exists in temp dir ' . $tmpDir, Color::LIGHT_YELLOW);
             // Update it first
             exec(sprintf('%s self-update 2>&1', $tmpDir . '/composer.phar'));
 
             // Return it
-            return 'composer.phar';
+            return $tmpDir . '/composer.phar';
         }
 
         // Try to download it
-        file_put_contents($tmpDir . '/composer.phar', 'https://getcomposer.org/composer.phar');
+        file_put_contents($tmpDir . '/composer.phar', fopen('https://getcomposer.org/composer.phar', '-r'));
+
         $this->downloadedComposer = $tmpDir . '/composer.phar';
-        return 'composer.phar';
+
+        // Make it executable
+        @chmod($this->downloadedComposer, 0755);
+
+        // Return it
+        return $this->downloadedComposer;
     }
 
     /**

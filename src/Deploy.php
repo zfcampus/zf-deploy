@@ -60,9 +60,9 @@ class Deploy
      * Facade method that accepts incoming CLI arguments, parses them, and
      * determines what workflows to execute.
      *
-     * @param Route $route
-     * @param Console $console
-     * @return int Exit status
+     * @param  Route   $route
+     * @param  Console $console
+     * @return int     Exit status
      */
     public function __invoke(Route $route, Console $console)
     {
@@ -132,21 +132,22 @@ class Deploy
      * Allows passing in a specific color to use when emitting the error
      * message; defaults to red.
      *
-     * @param string $message
-     * @param string $color
+     * @param  string $message
+     * @param  string $color
      * @return false
      */
     protected function reportError($message, $color = Color::RED)
     {
         $this->console->writeLine($message, $color);
+
         return false;
     }
 
     /**
      * Validate a deployment XML file against a schema
      *
-     * @param string $file
-     * @param string $schema
+     * @param  string $file
+     * @param  string $schema
      * @return bool
      */
     protected function validateXml($file, $schema)
@@ -174,8 +175,8 @@ class Deploy
      * Determines the format, and, if the package file is valid, sets the
      * format for this invocation.
      *
-     * @param string $package
-     * @param object $opts All options
+     * @param  string $package
+     * @param  object $opts    All options
      * @return bool
      */
     protected function validatePackage($package, $opts)
@@ -207,6 +208,7 @@ class Deploy
         }
 
         $opts->format = $format;
+
         return true;
     }
 
@@ -215,8 +217,8 @@ class Deploy
      *
      * If valid, also sets the $appConfig property in $opts.
      *
-     * @param string $target
-     * @param object $opts All options
+     * @param  string $target
+     * @param  object $opts   All options
      * @return bool
      */
     protected function validateApplicationPath($target, $opts)
@@ -239,14 +241,15 @@ class Deploy
 
         // Set $this->appConfig when done
         $opts->appConfig = $appConfig;
+
         return true;
     }
 
     /**
      * Validate the modules list
      *
-     * @param array $modules
-     * @param string $target
+     * @param  array  $modules
+     * @param  string $target
      * @return bool
      */
     protected function validateModules(array $modules, $target)
@@ -270,7 +273,7 @@ class Deploy
     /**
      * Validate a ZPK data directory
      *
-     * @param string $dir
+     * @param  string $dir
      * @return bool
      */
     protected function validateZpkDataDir($dir)
@@ -313,6 +316,7 @@ class Deploy
         }
 
         mkdir($tmpDir);
+
         return $tmpDir;
     }
 
@@ -326,13 +330,13 @@ class Deploy
      *
      * If the $format is not zpk, returns $tmpDir.
      *
-     * @param string $tmpDir
-     * @param string $appname
-     * @param string $version
-     * @param string $format
-     * @param string $deploymentXml
-     * @param string $zpkDataDir
-     * @param array $zpkDataDir
+     * @param  string       $tmpDir
+     * @param  string       $appname
+     * @param  string       $version
+     * @param  string       $format
+     * @param  string       $deploymentXml
+     * @param  string       $zpkDataDir
+     * @param  array        $zpkDataDir
      * @return string|false
      */
     protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml, $zpkDataDir, array $appConfig)
@@ -385,8 +389,8 @@ class Deploy
      *
      * Determines whether to use a ZF2 or Apigility logo.
      *
-     * @param string $tmpDir
-     * @param array $appConfig Application configuration
+     * @param  string $tmpDir
+     * @param  array  $appConfig Application configuration
      * @return string The logo file name
      */
     protected function copyLogo($tmpDir, array $appConfig)
@@ -400,6 +404,7 @@ class Deploy
         }
 
         copy($logoFile, $tmpDir . '/' . $logo);
+
         return $logo;
     }
 
@@ -409,11 +414,11 @@ class Deploy
      * Injects the application name, logo, and version, and then validates it
      * before returning.
      *
-     * @param string $tmpDir
-     * @param string $appname
-     * @param string $logo
-     * @param string $version
-     * @param string $format
+     * @param  string $tmpDir
+     * @param  string $appname
+     * @param  string $logo
+     * @param  string $version
+     * @param  string $format
      * @return bool
      */
     protected function prepareDeploymentXml($deploymentXml, $tmpDir, $appname, $logo, $version, $format)
@@ -433,11 +438,11 @@ class Deploy
     /**
      * Clone the application into the build directory
      *
-     * @param array $applicationPath
-     * @param array $tmpDir
-     * @param bool $gitignore
-     * @param bool $useVendor
-     * @param array $modules
+     * @param array        $applicationPath
+     * @param array        $tmpDir
+     * @param bool         $gitignore
+     * @param bool         $useVendor
+     * @param array        $modules
      * @param false|string $configsPath
      */
     protected function cloneApplication($applicationPath, $tmpDir, $gitignore, $useVendor, $modules, $configsPath)
@@ -467,7 +472,7 @@ class Deploy
      *
      * Only if specific modules were specified via the CLI arguments.
      *
-     * @param array $modules
+     * @param array  $modules
      * @param string $applicationPath
      * @param string $tmpDir
      */
@@ -481,6 +486,13 @@ class Deploy
         foreach ($modules as $module) {
             $normalized = str_replace('\\','/', $module);
             self::recursiveCopy($applicationPath . '/module/' . $normalized, $tmpDir . '/module/' . $normalized);
+        }
+
+        // enable only the selected modules in the config/application.config.php
+        if (file_exists($tmpDir . '/config/application.config.php')) {
+            $config = include $tmpDir . '/config/application.config.php';
+            $config['modules'] = $modules;
+            file_put_contents($tmpDir . '/config/application.config.php', '<?php return ' . var_export($config, true) . ';');
         }
     }
 
@@ -503,8 +515,8 @@ class Deploy
      *
      * @param string $source
      * @param string $dest
-     * @param array $exclude
-     * @param bool $gitignore
+     * @param array  $exclude
+     * @param bool   $gitignore
      */
     protected static function recursiveCopy($source, $dest, $exclude = array(), $gitignore = true)
     {
@@ -571,7 +583,7 @@ class Deploy
     /**
      * Recursively delete a directory
      *
-     * @param string $dir
+     * @param  string $dir
      * @return bool
      */
     protected static function recursiveDelete($dir)
@@ -590,15 +602,16 @@ class Deploy
 
         closedir($dh);
         @rmdir($dir);
+
         return true;
     }
 
     /**
      * Determine if composer should be executed, and, if so, execute it.
      *
-     * @param bool $useVendor
-     * @param bool $useComposer
-     * @param string $tmpDir
+     * @param  bool       $useVendor
+     * @param  bool       $useComposer
+     * @param  string     $tmpDir
      * @return false|null
      */
     protected function executeComposer($useVendor, $useComposer, $tmpDir)
@@ -635,7 +648,7 @@ class Deploy
      * If a 'composer.phar' exists in $tmpDir, perform a self-update, and use it.
      * Otherwise, download 'composer.phar' from getcomposer.org, and use it.
      *
-     * @param mixed $tmpDir
+     * @param  mixed  $tmpDir
      * @return string
      */
     protected function getComposerExecutable($tmpDir)
@@ -669,9 +682,9 @@ class Deploy
     /**
      * Create the package file
      *
-     * @param string $package
-     * @param string $dir
-     * @param string $format
+     * @param  string $package
+     * @param  string $dir
+     * @param  string $format
      * @return bool
      */
     protected function createPackage($package, $dir, $format)

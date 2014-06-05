@@ -3,5 +3,5 @@ namespace Test;
 
 class Module
 {
-	
+
 }

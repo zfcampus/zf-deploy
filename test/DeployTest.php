@@ -27,6 +27,7 @@ class DeployTest extends TestCase
         $this->console = Console::getInstance();
         $this->routes = include __DIR__ . '/../config/routes.php';
         $this->deploy = new Deploy();
+        copy(__DIR__ . '/TestAsset/App/config/autoload/.gitignore.dist', __DIR__ . '/TestAsset/App/config/autoload/.gitignore');
     }
 
     /**
@@ -39,6 +40,9 @@ class DeployTest extends TestCase
         }
         if (file_exists($this->tmpDir)) {
             $this->removeDir($this->tmpDir);
+        }
+        if (file_exists(__DIR__ . '/TestAsset/App/config/autoload/.gitignore')) {
+            unlink(__DIR__ . '/TestAsset/App/config/autoload/.gitignore');
         }
         ob_end_clean();
     }

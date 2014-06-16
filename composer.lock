@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "f4d547a5ad2b4c49e142024bf3e05e54",
+    "hash": "52c54c3a658972145a6e003c4d5c6a8d",
     "packages": [
         {
             "name": "herrera-io/json",
@@ -429,16 +429,16 @@
         },
         {
             "name": "zfcampus/zf-console",
-            "version": "1.0.1",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zfcampus/zf-console.git",
-                "reference": "84a9108e8846e0369d5063fc140395e9a3105d2c"
+                "reference": "1fb0684b4ef279719e849164543957aa67e53876"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zfcampus/zf-console/zipball/84a9108e8846e0369d5063fc140395e9a3105d2c",
-                "reference": "84a9108e8846e0369d5063fc140395e9a3105d2c",
+                "url": "https://api.github.com/repos/zfcampus/zf-console/zipball/1fb0684b4ef279719e849164543957aa67e53876",
+                "reference": "1fb0684b4ef279719e849164543957aa67e53876",
                 "shasum": ""
             },
             "require": {
@@ -447,7 +447,9 @@
             },
             "require-dev": {
                 "fabpot/php-cs-fixer": "*@dev",
-                "phpunit/phpunit": "3.7.*"
+                "phpunit/phpunit": "3.7.*",
+                "zendframework/zend-filter": "~2.0",
+                "zendframework/zend-validator": "~2.0"
             },
             "suggest": {
                 "zendframework/zend-filter": "~2.0; Useful for filtering/normalizing argument values",
@@ -476,7 +478,7 @@
                 "zend",
                 "zf2"
             ],
-            "time": "2014-06-04 15:20:23"
+            "time": "2014-06-16 22:15:02"
         }
     ],
     "packages-dev": [
@@ -1156,6 +1158,7 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": {
+        "zfcampus/zf-console": 20,
         "fabpot/php-cs-fixer": 20
     },
     "platform": {

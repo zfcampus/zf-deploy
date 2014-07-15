@@ -4,6 +4,7 @@
  * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
+use ZF\Console\Filter\Explode as ExplodeFilter;
 use ZF\Deploy\Deploy;
 
 $extensions = Deploy::getValidExtensions();
@@ -64,14 +65,7 @@ version, and, if found, downloads and installs the latest.',
         'filters' => array(
             'composer'  => $booleanFilter,
             'gitignore' => $booleanFilter,
-            'modules'   => function ($value) {
-                if (! is_string($value)) {
-                    return $value;
-                }
-                $modules = explode(',', $value);
-                array_walk($modules, 'trim');
-                return $modules;
-            },
+            'modules'   => new ExplodeFilter(),
         ),
     ),
 );

@@ -29,6 +29,7 @@ switch (true) {
 
 define('VERSION', '0.3.0-dev');
 
+$routes      = include __DIR__ . '/../config/routes.php';
 $dispatcher  = new Dispatcher();
 $dispatcher->map('self-update', new SelfUpdate(VERSION));
 $dispatcher->map('build', 'ZF\Deploy\Deploy');
@@ -36,7 +37,7 @@ $dispatcher->map('build', 'ZF\Deploy\Deploy');
 $application = new Application(
     'ZFDeploy',
     VERSION,
-    include __DIR__ . '/../config/routes.php',
+    $routes,
     Console::getInstance(),
     $dispatcher
 );

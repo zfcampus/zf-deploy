@@ -492,7 +492,7 @@ class Deploy
         if (file_exists($tmpDir . '/config/application.config.php')) {
             $config = include $tmpDir . '/config/application.config.php';
             $config['modules'] = $modules;
-            file_put_contents($tmpDir . '/config/application.config.php', '<?php return ' . var_export($config, true) . ';');
+            file_put_contents($tmpDir . '/config/application.config.php', '<' .'?php return ' . var_export($config, true) . ';');
         }
     }
 
@@ -622,7 +622,7 @@ class Deploy
 
         $composer = $this->getComposerExecutable($tmpDir);
         $command  = sprintf('%s install --no-dev --prefer-dist --optimize-autoloader 2>&1', $composer);
-        
+
         if ($composer !== 'composer') {
             $command = $this->prependPhpBinaryPath($command);
         }
@@ -665,18 +665,11 @@ class Deploy
         $phar = $tmpDir . '/composer.phar';
         if (file_exists($phar)) {
             $this->console->writeLine('composer.phar exists in temp dir ' . $tmpDir, Color::LIGHT_YELLOW);
-            
-            // Update it first
-            $updateCommand = sprintf('%s self-update 2>&1', $phar);
-            $updateCommand = $this->prependPhpBinaryPath($updateCommand);
-            exec($updateCommand);
-        } else {
-            // Try to download it
-            file_put_contents($phar, fopen('https://getcomposer.org/composer.phar', '-r'));
-            // Remember it is downloaded - to delete it afterwards
-            $this->downloadedComposer = $phar;
+            $this->updateComposerPhar($phar);
+            return $phar;
         }
-        
+
+        $this->downloadComposerPhar($phar);
         return $phar;
     }
 
@@ -771,22 +764,51 @@ class Deploy
         $this->console = $console;
         $this->downloadedComposer = null;
     }
-    
+
     /**
 	 * Prepends the PHP binary path to the given command.
 	 *
-	 * This is particularly useful when executing PHARs and ensures that they execute successfully even if the PHAR is not executable or there no PHP executable available in the environment.
-	 * The prepended PHP path is the one of the PHP executing the current process.
+     * This is particularly useful when executing PHARs and ensures that they
+     * execute successfully even if the PHAR is not executable or there no PHP
+     * executable available in the environment.
+     *
+     * The prepended PHP path is the one of the PHP executing the current
+     * process.
 	 *
-	 * @param string $command
-	 *        	a command line
-	 * @return string 
-	 *        	the modified command line
+	 * @param string $command a command line
+	 * @return string The modified command line
 	 */
-    private function prependPhpBinaryPath($command) {
-    	if (defined('PHP_BINARY')) { // Since PHP 5.4
+    protected function prependPhpBinaryPath($command)
+    {
+        if (defined('PHP_BINARY')) { // Since PHP 5.4
             $command = '"' . PHP_BINARY . '" ' . $command;
-    	}
-    	return $command;
+        }
+        return $command;
+    }
+
+    /**
+     * Update an existing composer.phar
+     *
+     * @param string $phar
+     */
+    protected function updateComposerPhar($phar)
+    {
+        $updateCommand = sprintf('%s self-update 2>&1', $phar);
+        $updateCommand = $this->prependPhpBinaryPath($updateCommand);
+        exec($updateCommand);
+    }
+
+    /**
+     * Download composer from getcomposer.org
+     *
+     * @param string $path
+     */
+    protected function downloadComposerPhar($path)
+    {
+        // Try to download it
+        file_put_contents($path, fopen('https://getcomposer.org/composer.phar', '-r'));
+
+        // Remember it is downloaded - to delete it afterwards
+        $this->downloadedComposer = $path;
     }
 }

@@ -4,18 +4,19 @@
  * @copyright Copyright (c) 2014 Zend Technologies USA Inc. (http://www.zend.com)
  */
 
+use Zend\Filter\Callback as CallbackFilter;
 use ZF\Console\Filter\Explode as ExplodeFilter;
 use ZF\Deploy\Deploy;
 
 $extensions = Deploy::getValidExtensions();
 array_walk($extensions, 'preg_quote');
 
-$booleanFilter = function ($value) {
+$booleanFilter = new CallbackFilter(function ($value) {
     if ('off' === $value) {
         return false;
     }
     return true;
-};
+});
 
 return array(
     array(
@@ -29,7 +30,7 @@ version, and, if found, downloads and installs the latest.',
     ),
     array(
         'name'  => 'build',
-        'route' => '<package> [--target=] [--modules=] [--vendor|-v]:vendor [--composer=] [--gitignore=] [--configs=] [--deploymentxml=] [--zpkdata=] [--version=]',
+        'route' => 'build <package> [--target=] [--modules=] [--vendor|-v]:vendor [--composer=] [--gitignore=] [--configs=] [--deploymentxml=] [--zpkdata=] [--version=]',
         'description' => 'Create a deployment package named <package> based on the provided target directory.',
         'short_description' => 'Build a deployment package',
         'options_descriptions' => array(

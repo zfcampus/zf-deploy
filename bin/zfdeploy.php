@@ -7,7 +7,6 @@
 
 use Zend\Console\Console;
 use ZF\Console\Application;
-use ZF\Console\Dispatcher;
 use ZF\Deploy\SelfUpdate;
 
 switch (true) {

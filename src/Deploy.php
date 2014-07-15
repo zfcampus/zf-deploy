@@ -159,13 +159,19 @@ class Deploy
             return $this->reportError(sprintf('Error: The XML schema file "%s" does not exist.', $schema));
         }
 
+        // Copy schema to temp file; fixes portability problem with Windows
+        $tmpSchema = tempnam(sys_get_temp_dir(), 'zfd');
+        copy($schema, $tmpSchema);
+
         // Validate the deployment XML file
         $dom = new DOMDocument();
         $dom->loadXML(file_get_contents($file));
-        if (! $dom->schemaValidate($schema)) {
+        if (! $dom->schemaValidate($tmpSchema)) {
+            unlink($tmpSchema);
             return $this->reportError(sprintf('The XML file "%s" does not validate against the schema "%s".', $file, $schema));
         }
 
+        unlink($tmpSchema);
         return true;
     }
 

@@ -24,7 +24,7 @@
         "herrera-io/phar-update": "~1.0",
         "zendframework/zend-console": "~2.0",
         "zendframework/zend-filter": "~2.0",
-        "zfcampus/zf-console": "dev-master"
+        "zfcampus/zf-console": "~1.0"
     },
     "require-dev": {
         "fabpot/php-cs-fixer": "*@dev",

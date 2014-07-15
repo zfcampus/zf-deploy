@@ -622,6 +622,10 @@ class Deploy
 
         $composer = $this->getComposerExecutable($tmpDir);
         $command  = sprintf('%s install --no-dev --prefer-dist --optimize-autoloader 2>&1', $composer);
+        
+        if ($composer !== 'composer') {
+            $command = $this->prependPhpBinaryPath($command);
+        }
 
         $this->console->write('Executing ', Color::BLUE);
         $this->console->writeLine($command);
@@ -658,25 +662,22 @@ class Deploy
             return 'composer';
         }
 
-        if (file_exists($tmpDir . '/composer.phar')) {
+        $phar = $tmpDir . '/composer.phar';
+        if (file_exists($phar)) {
             $this->console->writeLine('composer.phar exists in temp dir ' . $tmpDir, Color::LIGHT_YELLOW);
+            
             // Update it first
-            exec(sprintf('%s self-update 2>&1', $tmpDir . '/composer.phar'));
-
-            // Return it
-            return $tmpDir . '/composer.phar';
+            $updateCommand = sprintf('%s self-update 2>&1', $phar);
+            $updateCommand = $this->prependPhpBinaryPath($updateCommand);
+            exec($updateCommand);
+        } else {
+            // Try to download it
+            file_put_contents($phar, fopen('https://getcomposer.org/composer.phar', '-r'));
+            // Remember it is downloaded - to delete it afterwards
+            $this->downloadedComposer = $phar;
         }
-
-        // Try to download it
-        file_put_contents($tmpDir . '/composer.phar', fopen('https://getcomposer.org/composer.phar', '-r'));
-
-        $this->downloadedComposer = $tmpDir . '/composer.phar';
-
-        // Make it executable
-        @chmod($this->downloadedComposer, 0755);
-
-        // Return it
-        return $this->downloadedComposer;
+        
+        return $phar;
     }
 
     /**
@@ -769,5 +770,23 @@ class Deploy
     {
         $this->console = $console;
         $this->downloadedComposer = null;
+    }
+    
+    /**
+	 * Prepends the PHP binary path to the given command.
+	 *
+	 * This is particularly useful when executing PHARs and ensures that they execute successfully even if the PHAR is not executable or there no PHP executable available in the environment.
+	 * The prepended PHP path is the one of the PHP executing the current process.
+	 *
+	 * @param string $command
+	 *        	a command line
+	 * @return string 
+	 *        	the modified command line
+	 */
+    private function prependPhpBinaryPath($command) {
+    	if (defined('PHP_BINARY')) { // Since PHP 5.4
+            $command = '"' . PHP_BINARY . '" ' . $command;
+    	}
+    	return $command;
     }
 }

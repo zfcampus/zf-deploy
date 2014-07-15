@@ -30,16 +30,13 @@ switch (true) {
 define('VERSION', '0.3.0-dev');
 
 $routes      = include __DIR__ . '/../config/routes.php';
-$dispatcher  = new Dispatcher();
-$dispatcher->map('self-update', new SelfUpdate(VERSION));
-$dispatcher->map('build', 'ZF\Deploy\Deploy');
-
 $application = new Application(
     'ZFDeploy',
     VERSION,
     $routes,
-    Console::getInstance(),
-    $dispatcher
+    Console::getInstance()
 );
+$application->getDispatcher()->map('self-update', new SelfUpdate(VERSION));
+
 $exit = $application->run();
 exit($exit);

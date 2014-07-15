@@ -433,12 +433,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zfcampus/zf-console.git",
-                "reference": "d5d62195d1608853fba8c780d2f2df02061966be"
+                "reference": "ac9b608b19399c7ee9dd64de70e6e32d61897323"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zfcampus/zf-console/zipball/d5d62195d1608853fba8c780d2f2df02061966be",
-                "reference": "d5d62195d1608853fba8c780d2f2df02061966be",
+                "url": "https://api.github.com/repos/zfcampus/zf-console/zipball/ac9b608b19399c7ee9dd64de70e6e32d61897323",
+                "reference": "ac9b608b19399c7ee9dd64de70e6e32d61897323",
                 "shasum": ""
             },
             "require": {
@@ -478,7 +478,7 @@
                 "zend",
                 "zf2"
             ],
-            "time": "2014-07-15 14:05:32"
+            "time": "2014-07-15 19:08:28"
         }
     ],
     "packages-dev": [

@@ -20,7 +20,6 @@ $booleanFilter = function ($value) {
 return array(
     array(
         'name'  => 'self-update',
-        'route' => 'self-update',
         'description' => 'The self-update command checks packages.zendframework.com for a newer
 version, and, if found, downloads and installs the latest.',
         'short_description' => 'Updates zfdeploy.phar to the latest version',
@@ -30,7 +29,7 @@ version, and, if found, downloads and installs the latest.',
     ),
     array(
         'name'  => 'build',
-        'route' => 'build <package> [--target=] [--modules=] [--vendor|-v]:vendor [--composer=] [--gitignore=] [--configs=] [--deploymentxml=] [--zpkdata=] [--version=]',
+        'route' => '<package> [--target=] [--modules=] [--vendor|-v]:vendor [--composer=] [--gitignore=] [--configs=] [--deploymentxml=] [--zpkdata=] [--version=]',
         'description' => 'Create a deployment package named <package> based on the provided target directory.',
         'short_description' => 'Build a deployment package',
         'options_descriptions' => array(
@@ -67,5 +66,6 @@ version, and, if found, downloads and installs the latest.',
             'gitignore' => $booleanFilter,
             'modules'   => new ExplodeFilter(),
         ),
+        'handler' => 'ZF\Deploy\Deploy',
     ),
 );

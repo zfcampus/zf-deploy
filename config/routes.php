@@ -5,6 +5,7 @@
  */
 
 use Zend\Filter\Callback as CallbackFilter;
+use ZF\Console\Filter\Explode as ExplodeFilter;
 use ZF\Deploy\Deploy;
 
 $extensions = Deploy::getValidExtensions();
@@ -20,7 +21,6 @@ $booleanFilter = new CallbackFilter(function ($value) {
 return array(
     array(
         'name'  => 'self-update',
-        'route' => 'self-update',
         'description' => 'The self-update command checks packages.zendframework.com for a newer
 version, and, if found, downloads and installs the latest.',
         'short_description' => 'Updates zfdeploy.phar to the latest version',
@@ -65,14 +65,8 @@ version, and, if found, downloads and installs the latest.',
         'filters' => array(
             'composer'  => $booleanFilter,
             'gitignore' => $booleanFilter,
-            'modules'   => new CallbackFilter(function ($value) {
-                if (! is_string($value)) {
-                    return $value;
-                }
-                $modules = explode(',', $value);
-                array_walk($modules, 'trim');
-                return $modules;
-            }),
+            'modules'   => new ExplodeFilter(),
         ),
+        'handler' => 'ZF\Deploy\Deploy',
     ),
 );

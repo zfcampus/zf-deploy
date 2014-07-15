@@ -96,7 +96,7 @@ class Deploy
             $opts->format,
             $opts->deploymentxml,
             $opts->zpkdata,
-            $opts->appConfig
+            $opts->appConfigPath
         );
         if (false === $tmpDir) {
             return 1;
@@ -215,7 +215,7 @@ class Deploy
     /**
      * Validate the application path
      *
-     * If valid, also sets the $appConfig property in $opts.
+     * If valid, also sets the $appConfigPath property in $opts.
      *
      * @param  string $target
      * @param  object $opts   All options
@@ -234,13 +234,13 @@ class Deploy
             return $this->reportError(sprintf('Error: the folder "%s" does not contain a standard ZF2 application', $target));
         }
 
-        $appConfig = include $appConfigPath;
-        if (! $appConfig || !isset($appConfig['modules'])) {
+        $appConfig = file_get_contents($appConfigPath);
+        if (! preg_match('/\'modules\'\s*=>\s*array\s*\(/s', $appConfig)) {
             return $this->reportError(sprintf('Error: the folder "%s" does not contain a standard ZF2 application', $target));
         }
 
-        // Set $this->appConfig when done
-        $opts->appConfig = $appConfig;
+        // Set $this->appConfigPath when done
+        $opts->appConfigPath = $appConfigPath;
 
         return true;
     }
@@ -339,7 +339,7 @@ class Deploy
      * @param  array        $zpkDataDir
      * @return string|false
      */
-    protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml, $zpkDataDir, array $appConfig)
+    protected function prepareZpk($tmpDir, $appname, $version, $format, $deploymentXml, $zpkDataDir, $appConfigPath)
     {
         if ('zpk' !== $format) {
             return $tmpDir;
@@ -372,7 +372,7 @@ class Deploy
 
         // No deployment.xml provided; use defaults
         if (! $deploymentXml) {
-            $logo          = $this->copyLogo($tmpDir, $appConfig);
+            $logo          = $this->copyLogo($tmpDir, $appConfigPath);
             $deploymentXml = __DIR__ . '/../config/zpk/deployment.xml';
         }
 
@@ -390,15 +390,20 @@ class Deploy
      * Determines whether to use a ZF2 or Apigility logo.
      *
      * @param  string $tmpDir
-     * @param  array  $appConfig Application configuration
+     * @param  array  $appConfigPath Application configuration path
      * @return string The logo file name
      */
-    protected function copyLogo($tmpDir, array $appConfig)
+    protected function copyLogo($tmpDir, $appConfigPath)
     {
         $logoFile = __DIR__ . '/../config/zpk/logo/zf2-logo.png';
         $logo = 'zf2-logo.png';
 
-        if (isset($appConfig['modules']) && in_array('ZF\Apigility', $appConfig['modules'])) {
+        $ns        = preg_quote('\\');
+        $appConfig = file_get_contents($appConfigPath);
+        if (preg_match(
+            '/\'modules\'\s*=>\s*array\s*\(\s+[\'a-z0-9\s_' . $ns . ',]*?\'zf' . $ns . '+apigility\'/is',
+            $appConfig
+        )) {
             $logoFile = __DIR__ . '/../config/zpk/logo/apigility-logo.png';
             $logo = 'apigility-logo.png';
         }

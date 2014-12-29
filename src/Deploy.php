@@ -240,11 +240,6 @@ class Deploy
             return $this->reportError(sprintf('Error: the folder "%s" does not contain a standard ZF2 application', $target));
         }
 
-        $appConfig = file_get_contents($appConfigPath);
-        if (! preg_match('/\'modules\'\s*=>\s*array\s*\(/s', $appConfig)) {
-            return $this->reportError(sprintf('Error: the folder "%s" does not contain a standard ZF2 application', $target));
-        }
-
         // Set $this->appConfigPath when done
         $opts->appConfigPath = $appConfigPath;
 

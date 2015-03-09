@@ -340,9 +340,9 @@ class DeployTest extends TestCase
     }
 
     /**
-     * Test the build command with a not ZF2 application
+     * Test the build command with a non-ZF2 application
      */
-    public function testBuiltWithNotZF2Application()
+    public function testNonZF2ApplicationRaisesException()
     {
       $deploy = $this->deploy;
       $route = $this->getRoute('build');

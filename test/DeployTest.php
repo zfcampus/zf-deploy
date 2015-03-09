@@ -340,6 +340,19 @@ class DeployTest extends TestCase
     }
 
     /**
+     * Test the build command with a not ZF2 application
+     */
+    public function testBuiltWithNotZF2Application()
+    {
+      $deploy = $this->deploy;
+      $route = $this->getRoute('build');
+      $this->deployFile = __DIR__ . '/TestAsset/build.zip';
+      $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset'));
+      $this->assertEquals(1, $deploy($route, $this->console));
+      $this->assertContains('does not contain a standard ZF2 application', ob_get_contents());
+    }
+
+    /**
      * Remove a dir, even if not empty
      *
      * @param string $dir

@@ -523,11 +523,11 @@ class Deploy
             $config = include $tmpDir . '/config/application.config.php';
             // Remove a module if not present in $modules
             $tot = count($config['modules']);
-            for($i = 0; $i < $tot; $i++) {
-              $normalized = str_replace('\\', '/', $config['modules'][$i]);
-              if (is_dir($applicationPath . '/module/' . $normalized) && !in_array($config['modules'][$i], $modules)) {
-                unset($config['modules'][$i]);
-              }
+            for ($i = 0; $i < $tot; $i++) {
+                $normalized = str_replace('\\', '/', $config['modules'][$i]);
+                if (is_dir($applicationPath . '/module/' . $normalized) && !in_array($config['modules'][$i], $modules)) {
+                    unset($config['modules'][$i]);
+                }
             }
             file_put_contents(
                 $tmpDir . '/config/application.config.php',
@@ -595,7 +595,8 @@ class Deploy
             $umask = umask(0);
             mkdir($dest, $dirperms, true);
             umask($umask); // Restore original umask when done
-        } while (false !== ($file = readdir($dir))) {
+        }
+        while (false !== ($file = readdir($dir))) {
             if ($file === '.' || $file === '..' || $file === '.git') {
                 continue;
             }
@@ -630,7 +631,8 @@ class Deploy
     {
         if (false === ($dh = @opendir($dir))) {
             return false;
-        } while (false !== ($obj = readdir($dh))) {
+        }
+        while (false !== ($obj = readdir($dh))) {
             if ($obj == '.' || $obj == '..') {
                 continue;
             }

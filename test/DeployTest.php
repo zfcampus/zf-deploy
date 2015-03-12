@@ -205,7 +205,7 @@ class DeployTest extends TestCase
         $this->assertFileExists($this->tmpDir . '/module/Application/Module.php');
         $this->assertFileNotExists($this->tmpDir . '/module/Test/Module.php');
         $config = include $this->tmpDir . '/config/application.config.php';
-        $this->assertEquals($config['modules'], array('Application'));
+        $this->assertEquals($config['modules'], array('ZfcBase', 'ZfcUser', 'Application'));
     }
 
     /**

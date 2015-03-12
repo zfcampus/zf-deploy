@@ -521,10 +521,17 @@ class Deploy
         // enable only the selected modules in the config/application.config.php
         if (file_exists($tmpDir . '/config/application.config.php')) {
             $config = include $tmpDir . '/config/application.config.php';
-            $config['modules'] = $modules;
+            // Remove a module if not present in $modules
+            $tot = count($config['modules']);
+            for($i = 0; $i < $tot; $i++) {
+              $normalized = str_replace('\\', '/', $config['modules'][$i]);
+              if (is_dir($applicationPath . '/module/' . $normalized) && !in_array($config['modules'][$i], $modules)) {
+                unset($config['modules'][$i]);
+              }
+            }
             file_put_contents(
                 $tmpDir . '/config/application.config.php',
-                '<' . '?php return ' . var_export($config, true) . ';'
+                '<?php return ' . var_export($config, true) . ';'
             );
         }
     }

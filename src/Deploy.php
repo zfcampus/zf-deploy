@@ -731,7 +731,7 @@ class Deploy
         if ($exitCode !== 0) {
             $this->exitCode = ZFDEPLOY_ERROR_COMPOSER_ERROR;
             return $this->reportError(
-                'Composer error during install command (exit code: ' . $exitCode . ') ' . $output
+                'Composer error during install command (exit code: ' . $exitCode . ') ' . implode(";", $output)
             );
         }
     }

@@ -17,6 +17,24 @@ use Zend\Console\ColorInterface as Color;
 use ZF\Console\Route;
 use ZipArchive;
 
+define ('ZFDEPLOY_INFO_NO_ERROR', 0);
+//validation phase errors
+define ('ZFDEPLOY_ERROR_PACKAGE_EXISTS', 101);
+define ('ZFDEPLOY_ERROR_MISSING_ZIP_EXTENSION', 102);
+define ('ZFDEPLOY_ERROR_MISSING_PHAR_EXTENSION', 103);
+define ('ZFDEPLOY_ERROR_WRONG_APP_DIR', 104);
+define ('ZFDEPLOY_ERROR_MISSING_APP_CONFIG', 105);
+define ('ZFDEPLOY_ERROR_MISSING_APP_MODULES', 106);
+define ('ZFDEPLOY_ERROR_MISSING_APP_MODULE', 107);
+//processing phase errors
+define ('ZFDEPLOY_ERROR_COULD_NOT_SELECT_TEMP_DIR', 201);
+define ('ZFDEPLOY_ERROR_COULD_NOT_CREATE_TEMP_DIR', 202);
+define ('ZFDEPLOY_ERROR_WRONG_DATA_DIR', 203);
+define ('ZFDEPLOY_ERROR_MISSING_DEPLOYMENT_FILE', 204);
+define ('ZFDEPLOY_ERROR_WRONG_DEPLOYMENT_FILE', 205);
+define ('ZFDEPLOY_ERROR_COMPOSER_ERROR', 206);
+define ('ZFDEPLOY_ERROR_UNKNOWN_ARCHIVE_FORMAT', 207);
+
 class Deploy
 {
     /**
@@ -45,6 +63,13 @@ class Deploy
     );
 
     /**
+     * Deployment process exit code.
+     *
+     * @var integer
+     */
+    protected $exitCode = ZFDEPLOY_INFO_NO_ERROR;
+    
+    /**
      * Retrieve list of allowed extensions
      *
      * @return array
@@ -71,22 +96,22 @@ class Deploy
         $opts = (object) $route->getMatches();
 
         if (! $this->validatePackage($opts->package, $opts)) {
-            return 1;
+            return $this->exitCode;
         }
 
         if (! $this->validateApplicationPath($opts->target, $opts)) {
-            return 1;
+            return $this->exitCode;
         }
 
         if (! $this->validateModules($opts->modules, $opts->target)) {
-            return 1;
+            return $this->exitCode;
         }
 
         $console->writeLine(sprintf('Creating package "%s"...', $opts->package), Color::BLUE);
 
         $tmpDir = $this->createTmpDir();
         if (false === $tmpDir) {
-            return 1;
+            return $this->exitCode;
         }
 
         $tmpDir = $this->prepareZpk(
@@ -98,8 +123,9 @@ class Deploy
             $opts->zpkdata,
             $opts->appConfigPath
         );
+        
         if (false === $tmpDir) {
-            return 1;
+            return $this->exitCode;
         }
 
         $this->cloneApplication(
@@ -113,13 +139,13 @@ class Deploy
         $this->copyModules($opts->modules, $opts->target, $tmpDir);
 
         if (false === $this->executeComposer($opts->vendor, $opts->composer, $tmpDir)) {
-            return 1;
+            return $this->exitCode;
         }
 
         $this->removeTestDir($tmpDir . '/vendor');
 
         if (false === $this->createPackage($opts->package, $tmpDir, $opts->format)) {
-            return 1;
+            return $this->exitCode;
         }
 
         self::recursiveDelete($opts->format === 'zpk' ? dirname($tmpDir) : $tmpDir);
@@ -130,7 +156,7 @@ class Deploy
             filesize($opts->package)
         ), Color::GREEN);
 
-        return 0;
+        return ZFDEPLOY_INFO_NO_ERROR;
     }
 
     /**
@@ -200,6 +226,7 @@ class Deploy
     {
         // Does the file already exist? (if so, error!)
         if (file_exists($package)) {
+            $this->exitCode = ZFDEPLOY_ERROR_PACKAGE_EXISTS;
             return $this->reportError(sprintf('Error: package file "%s" already exists', $package));
         }
 
@@ -211,6 +238,7 @@ class Deploy
             case 'zip':
             case 'zpk':
                 if (! extension_loaded('zip')) {
+                    $this->exitCode = ZFDEPLOY_ERROR_MISSING_ZIP_EXTENSION;
                     return $this->reportError('Error: the ZIP extension of PHP is not loaded.');
                 }
                 break;
@@ -219,6 +247,7 @@ class Deploy
             case 'tar.gz':
             case 'tgz':
                 if (! class_exists('PharData')) {
+                    $this->exitCode = ZFDEPLOY_ERROR_MISSING_PHAR_EXTENSION;
                     return $this->reportError('Error: the Phar extension of PHP is not loaded.');
                 }
                 break;
@@ -242,12 +271,14 @@ class Deploy
     {
         // Is it a directory? (if not, error!)
         if (! is_dir($target)) {
+            $this->exitCode = ZFDEPLOY_ERROR_WRONG_APP_DIR;
             return $this->reportError(sprintf('Error: the application path "%s" is not valid', $target));
         }
 
         // Is it a valid ZF2 app? (if not, error!)
         $appConfigPath = $target . '/config/application.config.php';
         if (! file_exists($appConfigPath)) {
+            $this->exitCode = ZFDEPLOY_ERROR_MISSING_APP_CONFIG;
             return $this->reportError(sprintf(
                 'Error: the folder "%s" does not contain a standard ZF2 application',
                 $target
@@ -255,6 +286,7 @@ class Deploy
         }
         $config = require $appConfigPath;
         if (! isset($config['modules'])) {
+            $this->exitCode = ZFDEPLOY_ERROR_MISSING_APP_MODULES;
             return $this->reportError(sprintf(
                 'Error: the folder "%s" does not contain a standard ZF2 application',
                 $target
@@ -285,6 +317,7 @@ class Deploy
         foreach ($modules as $module) {
             $normalized = str_replace('\\', '/', $module);
             if (! is_dir($target . '/module/' . $normalized)) {
+                $this->exitCode = ZFDEPLOY_ERROR_MISSING_MODULE;
                 return $this->reportError(sprintf('Error: the module "%s" does not exist in %s', $module, $target));
             }
         }
@@ -307,11 +340,13 @@ class Deploy
 
         // Does the directory exist? (if not, error!)
         if (! file_exists($dir) || ! is_dir($dir)) {
+            $this->exitCode = ZFDEPLOY_ERROR_WRONG_DATA_DIR;
             return $this->reportError(sprintf('Error: The specified ZPK data directory "%s" does not exist', $dir));
         }
 
         // Does the directory contain a deployment.xml file? (if not, error!)
         if (! file_exists($dir . '/deployment.xml')) {
+            $this->exitCode = ZFDEPLOY_ERROR_MISSING_DEPLOYMENT_FILE;
             return $this->reportError(sprintf(
                 'Error: The specified ZPK data directory "%s" does not contain a deployment.xml file',
                 $dir
@@ -337,11 +372,16 @@ class Deploy
         } while ($count < 3 && file_exists($tmpDir));
 
         if ($count >= 3) {
-            return $this->reportError('Error: Cannot create a temporary directory in %s', sys_get_temp_dir());
+            $this->exitCode = ZFDEPLOY_ERROR_COULD_NOT_SELECT_TEMP_DIR;
+            return $this->reportError('Error: Cannot select a temporary directory in %s', sys_get_temp_dir());
         }
 
-        mkdir($tmpDir);
-
+        $mkdir = mkdir($tmpDir);
+        if (false === $mkdir) {
+            $this->exitCode = ZFDEPLOY_ERROR_COULD_NOT_CREATE_TEMP_DIR;
+            return $this->reportError('Error: Cannot create a temporary directory %s', $tmpDir);
+        }
+        
         return $tmpDir;
     }
 
@@ -462,7 +502,13 @@ class Deploy
         $packageLocation = $tmpDir . '/deployment.xml';
         file_put_contents($packageLocation, $deployString);
 
-        return $this->validateXml($packageLocation, __DIR__ . '/../config/zpk/schema.xsd');
+        if(! $this->validateXml($packageLocation, __DIR__ . '/../config/zpk/schema.xsd')){
+            $this->exitCode = ZFDEPLOY_ERROR_WRONG_DEPLOYMENT_FILE;
+            return $this->reportError(sprintf(
+                'Error: Wrong "%s" file content', $packageLocation));
+        }
+        
+        return true;
     }
 
     /**
@@ -683,8 +729,9 @@ class Deploy
         }
 
         if ($exitCode !== 0) {
+            $this->exitCode = ZFDEPLOY_ERROR_COMPOSER_ERROR;
             return $this->reportError(
-                'Composer error during install command (exit code: ' . $exitCode . ') ' . $result
+                'Composer error during install command (exit code: ' . $exitCode . ') ' . implode(";", $output)
             );
         }
     }
@@ -750,6 +797,7 @@ class Deploy
                 $packager = new PharData($pharFile);
                 break;
             default:
+                $this->exitCode = ZFDEPLOY_ERROR_UNKNOWN_ARCHIVE_FORMAT;
                 return $this->reportError(sprintf('Unknown package format "%s"', $format));
         }
 
@@ -808,6 +856,7 @@ class Deploy
     {
         $this->console = $console;
         $this->downloadedComposer = null;
+        $this->exitCode = ZFDEPLOY_INFO_NO_ERROR;
     }
 
     /**

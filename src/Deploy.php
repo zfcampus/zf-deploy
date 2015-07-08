@@ -768,7 +768,8 @@ class Deploy
             case 'zip':
             case 'zpk':
                 foreach ($files as $name => $file) {
-                    $packager->addFile($file, substr($file, $dirPos));
+                    $normalizedFile = str_replace('\\', '/', $file);
+                    $packager->addFile($normalizedFile, substr($normalizedFile, $dirPos));
                 }
                 break;
             case 'tar':

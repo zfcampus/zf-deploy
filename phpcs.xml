@@ -17,4 +17,12 @@
     <!-- Paths to check -->
     <file>src</file>
     <file>test</file>
+
+    <exclude-pattern>*/test/TestAsset/App/data/*</exclude-pattern>
+    <exclude-pattern>*/test/TestAsset/App/public/.htaccess</exclude-pattern>
+    <exclude-pattern>*/test/TestAsset/App/public/css/*</exclude-pattern>
+    <exclude-pattern>*/test/TestAsset/App/public/fonts/*</exclude-pattern>
+    <exclude-pattern>*/test/TestAsset/App/public/img/*</exclude-pattern>
+    <exclude-pattern>*/test/TestAsset/App/public/js/*</exclude-pattern>
+    <exclude-pattern>*/test/TestAsset/App/vendor/*</exclude-pattern>
 </ruleset>

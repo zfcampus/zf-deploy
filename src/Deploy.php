@@ -525,7 +525,9 @@ class Deploy
             $tot = count($config['modules']);
             for ($i = 0; $i < $tot; $i++) {
                 $normalized = str_replace('\\', '/', $config['modules'][$i]);
-                if (is_dir($applicationPath . '/module/' . $normalized) && !in_array($config['modules'][$i], $modules)) {
+                if (is_dir($applicationPath . '/module/' . $normalized)
+                    && !in_array($config['modules'][$i], $modules)
+                ) {
                     unset($config['modules'][$i]);
                 }
             }

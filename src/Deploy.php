@@ -72,7 +72,7 @@ class Deploy
      * @var integer
      */
     protected $exitCode = self::INFO_NO_ERROR;
-    
+
     /**
      * Retrieve list of allowed extensions
      *
@@ -127,7 +127,7 @@ class Deploy
             $opts->zpkdata,
             $opts->appConfigPath
         );
-        
+
         if (false === $tmpDir) {
             return $this->exitCode;
         }
@@ -384,7 +384,7 @@ class Deploy
             $this->exitCode = self::ERROR_COULD_NOT_CREATE_TEMP_DIR;
             return $this->reportError('Error: Cannot create a temporary directory %s', $tmpDir);
         }
-        
+
         return $tmpDir;
     }
 
@@ -512,7 +512,7 @@ class Deploy
                 $packageLocation
             ));
         }
-        
+
         return true;
     }
 

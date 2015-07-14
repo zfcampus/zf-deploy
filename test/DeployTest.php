@@ -390,7 +390,7 @@ class DeployTest extends TestCase
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zip';
         $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset'));
-        $this->assertEquals(1, $deploy($route, $this->console));
+        $this->assertNotEquals(0, $deploy($route, $this->console));
         $this->assertContains('does not contain a standard ZF2 application', ob_get_contents());
     }
 

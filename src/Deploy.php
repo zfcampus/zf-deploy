@@ -380,7 +380,7 @@ class Deploy
             return $this->reportError('Error: Cannot select a temporary directory in %s', sys_get_temp_dir());
         }
 
-        if (false === mkdir($tempDir)) {
+        if (false === mkdir($tmpDir)) {
             $this->exitCode = self::ERROR_COULD_NOT_CREATE_TEMP_DIR;
             return $this->reportError('Error: Cannot create a temporary directory %s', $tmpDir);
         }

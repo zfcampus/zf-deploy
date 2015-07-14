@@ -380,8 +380,7 @@ class Deploy
             return $this->reportError('Error: Cannot select a temporary directory in %s', sys_get_temp_dir());
         }
 
-        $mkdir = mkdir($tmpDir);
-        if (false === $mkdir) {
+        if (false === mkdir($tempDir)) {
             $this->exitCode = self::ERROR_COULD_NOT_CREATE_TEMP_DIR;
             return $this->reportError('Error: Cannot create a temporary directory %s', $tmpDir);
         }
@@ -739,7 +738,7 @@ class Deploy
         if ($exitCode !== 0) {
             $this->exitCode = self::ERROR_COMPOSER_ERROR;
             return $this->reportError(
-                'Composer error during install command (exit code: ' . $exitCode . ') ' . implode(";", $output)
+                'Composer error during install command (exit code: ' . $exitCode . ') ' . implode('; ', $output)
             );
         }
     }

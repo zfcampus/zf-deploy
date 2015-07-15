@@ -65,9 +65,9 @@ class DeployTest extends TestCase
 
                 $constraints = (isset($spec['constraints']) && is_array($spec['constraints']))
                     ? $spec['constraints']
-                    : array();
-                $defaults = (isset($spec['defaults']) && is_array($spec['defaults'])) ? $spec['defaults'] : array();
-                $aliases = (isset($spec['aliases']) && is_array($spec['aliases'])) ? $spec['aliases'] : array();
+                    : [];
+                $defaults = (isset($spec['defaults']) && is_array($spec['defaults'])) ? $spec['defaults'] : [];
+                $aliases = (isset($spec['aliases']) && is_array($spec['aliases'])) ? $spec['aliases'] : [];
                 $filters = (isset($spec['filters']) && is_array($spec['filters'])) ? $spec['filters'] : null;
                 $validators = (isset($spec['validators']) && is_array($spec['validators']))
                     ? $spec['validators']
@@ -80,7 +80,7 @@ class DeployTest extends TestCase
                     : '';
                 $optionsDescription = (isset($spec['options_descriptions']) && is_array($spec['options_descriptions']))
                     ? $spec['options_descriptions']
-                    : array();
+                    : [];
 
                 $route = new Route($name, $routeString, $constraints, $defaults, $aliases, $filters, $validators);
                 $route->setDescription($description);
@@ -112,7 +112,7 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zip';
-        $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App'));
+        $route->match(['build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App']);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -140,7 +140,7 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.tgz';
-        $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App'));
+        $route->match(['build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App']);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -162,7 +162,7 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zpk';
-        $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App'));
+        $route->match(['build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App']);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -185,13 +185,13 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zip';
-        $route->match(array(
+        $route->match([
             'build',
             $this->deployFile,
             '--target',
             __DIR__ . '/TestAsset/App',
             '--modules', 'Application'
-        ));
+        ]);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -205,7 +205,7 @@ class DeployTest extends TestCase
         $this->assertFileExists($this->tmpDir . '/module/Application/Module.php');
         $this->assertFileNotExists($this->tmpDir . '/module/Test/Module.php');
         $config = include $this->tmpDir . '/config/application.config.php';
-        $this->assertEquals($config['modules'], array('ZfcBase', 'ZfcUser', 'Application'));
+        $this->assertEquals($config['modules'], ['ZfcBase', 'ZfcUser', 'Application']);
     }
 
     /**
@@ -218,7 +218,7 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zip';
-        $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App', '--vendor'));
+        $route->match(['build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App', '--vendor']);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -243,7 +243,7 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zip';
-        $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App', '--composer', 'off'));
+        $route->match(['build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App', '--composer', 'off']);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -267,7 +267,7 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zip';
-        $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App', '--gitignore', 'off'));
+        $route->match(['build', $this->deployFile, '--target', __DIR__ . '/TestAsset/App', '--gitignore', 'off']);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -291,14 +291,14 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zip';
-        $route->match(array(
+        $route->match([
             'build',
             $this->deployFile,
             '--target',
             __DIR__ . '/TestAsset/App',
             '--configs',
             __DIR__ . '/TestAsset/config'
-        ));
+        ]);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -324,14 +324,14 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zpk';
-        $route->match(array(
+        $route->match([
             'build',
             $this->deployFile,
             '--target',
             __DIR__ . '/TestAsset/App',
             '--deploymentxml',
             __DIR__ . '/TestAsset/zpk/deployment.xml'
-        ));
+        ]);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -357,14 +357,14 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zpk';
-        $route->match(array(
+        $route->match([
             'build',
             $this->deployFile,
             '--target',
             __DIR__ . '/TestAsset/App',
             '--zpkdata',
             __DIR__ . '/TestAsset/zpk'
-        ));
+        ]);
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
@@ -389,7 +389,7 @@ class DeployTest extends TestCase
         $deploy = $this->deploy;
         $route = $this->getRoute('build');
         $this->deployFile = __DIR__ . '/TestAsset/build.zip';
-        $route->match(array('build', $this->deployFile, '--target', __DIR__ . '/TestAsset'));
+        $route->match(['build', $this->deployFile, '--target', __DIR__ . '/TestAsset']);
         $this->assertNotEquals(0, $deploy($route, $this->console));
         $this->assertContains('does not contain a standard ZF2 application', ob_get_contents());
     }
@@ -401,7 +401,7 @@ class DeployTest extends TestCase
      */
     protected function removeDir($dir)
     {
-        $files = array_diff(scandir($dir), array('.','..'));
+        $files = array_diff(scandir($dir), ['.','..']);
         foreach ($files as $file) {
             (is_dir("$dir/$file")) ? $this->removeDir("$dir/$file") : unlink("$dir/$file");
         }

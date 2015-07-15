@@ -58,13 +58,13 @@ class Deploy
      *
      * @var array
      */
-    protected static $validExtensions = array(
+    protected static $validExtensions = [
         'zip',
         'tar',
         'tar.gz',
         'tgz',
         'zpk',
-    );
+    ];
 
     /**
      * Deployment process exit code.
@@ -528,7 +528,7 @@ class Deploy
      */
     protected function cloneApplication($applicationPath, $tmpDir, $gitignore, $useVendor, $modules, $configsPath)
     {
-        $exclude = array();
+        $exclude = [];
         if (! $useVendor) {
             $exclude[$applicationPath . '/composer.lock'] = true;
             $exclude[$applicationPath . '/vendor'] = true;
@@ -611,7 +611,7 @@ class Deploy
      * @param array  $exclude
      * @param bool   $gitignore
      */
-    protected static function recursiveCopy($source, $dest, $exclude = array(), $gitignore = true)
+    protected static function recursiveCopy($source, $dest, $exclude = [], $gitignore = true)
     {
         $dir = opendir($source);
         if (false === $dir) {

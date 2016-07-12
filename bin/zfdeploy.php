@@ -26,7 +26,7 @@ switch (true) {
         throw new RuntimeException('Unable to locate Composer autoloader; please run "composer install".');
 }
 
-define('VERSION', '1.2.0dev');
+define('VERSION', '1.2.0');
 
 switch (true) {
     case (file_exists(__DIR__ . '/../config/routes.php')):

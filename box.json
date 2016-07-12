@@ -15,7 +15,7 @@
             "in": "vendor"
         }
     ],
-    "git-version": "1.2.0",
+    "git-version": "1.2.1dev",
     "main": "bin/zfdeploy.php",
     "output": "zfdeploy.phar",
     "stub": true

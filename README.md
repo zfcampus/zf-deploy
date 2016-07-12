@@ -1,12 +1,12 @@
-ZFDeploy - deploy ZF2 applications
-==================================
+ZFDeploy - deploy ZF applications
+=================================
 
 [![Build Status](https://travis-ci.org/zfcampus/zf-deploy.png)](https://travis-ci.org/zfcampus/zf-deploy)
 
 Introduction
 ------------
 
-**ZFDeploy** is a command line tool to deploy [Zend Framework 2](http://framework.zend.com) applications.
+**ZFDeploy** is a command line tool to deploy [Zend Framework](http://framework.zend.com) applications.
 
 This tool produces a file package ready to be deployed. The tool supports the following format:
 ZIP, TAR, TGZ (.TAR.GZ), .ZPK (the deployment file format of [Zend Server 6](http://files.zend.com/help/Zend-Server/zend-server.htm#understanding_the_package_structure.htm)).
@@ -163,12 +163,12 @@ the `.gitignore` file using the `--gitignore off` option.
 
 > ### NOTE: if you disable the .gitignore usage
 >
-> If you disable the `.gitignore` using the `--gitignore off` option, all the files of the ZF2
+> If you disable the `.gitignore` using the `--gitignore off` option, all the files of the ZF
 > application will be included in the package. **That means local configuration files, including
 > sensitive information like database credentials, are deployed in production!!!** Please consider
 > this behaviour before switching off the gitignore option.
 
-Another important part of the deployment of a ZF2 application is the usage of
+Another important part of the deployment of a ZF application is the usage of
 [composer](https://getcomposer.org).
 
 **ZFDeploy** executes the following composer command during the creation of the deployment package:
@@ -188,7 +188,7 @@ page of the project.
 
 > ### Note: production configuration
 >
-> Zend Framework 2 applications often include `{,*.}local.php` files in `config\autoload/`, which
+> Zend Framework applications often include `{,*.}local.php` files in `config\autoload/`, which
 > are used to provide environment specific configuration. (In Apigility, this may include database
 > configuration, Authentication configuration, etc.). These files are omitted from version control
 > via `.gitignore` directives -- and, by default, from packaging.

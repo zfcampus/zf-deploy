@@ -1,7 +1,0 @@
-<phpunit bootstrap="./vendor/autoload.php" colors="true">
-    <testsuites>
-        <testsuite name="ZFDeploy Module Tests">
-            <directory>./test</directory>
-        </testsuite>
-    </testsuites>
-</phpunit>

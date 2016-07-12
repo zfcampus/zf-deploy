@@ -1,6 +1,5 @@
 vendor/
 .buildpath
-.php_cs.cache
 .project
 .settings
-composer.lock
+phpunit.xml

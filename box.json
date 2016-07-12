@@ -5,7 +5,7 @@
         "src"
     ],
     "files": [
-        "LICENSE.txt",
+        "LICENSE.md",
         "vendor/herrera-io/phar-update/res/schema.json"
     ],
     "finder": [
@@ -15,7 +15,7 @@
             "in": "vendor"
         }
     ],
-    "git-version": "1.1.1",
+    "git-version": "1.2.0dev",
     "main": "bin/zfdeploy.php",
     "output": "zfdeploy.phar",
     "stub": true

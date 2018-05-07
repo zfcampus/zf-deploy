@@ -2,9 +2,13 @@
 
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
-## 1.2.1 - TBD
+## 1.3.0 - TBD
 
 ### Added
+
+- [#50](https://github.com/zfcampus/zf-deploy/pull/50) adds support for PHP 7.1 and 7.2.
+
+### Changed
 
 - Nothing.
 
@@ -14,7 +18,7 @@ All notable changes to this project will be documented in this file, in reverse 
 
 ### Removed
 
-- Nothing.
+- [#50](https://github.com/zfcampus/zf-deploy/pull/50) removes support for HHVM.
 
 ### Fixed
 

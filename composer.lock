@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d448c6847f91cb90b79f65b31e9d2075",
+    "content-hash": "ec726b00c72bcea3f65389a71b278676",
     "packages": [
         {
             "name": "herrera-io/json",

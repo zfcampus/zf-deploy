@@ -5,7 +5,7 @@
  */
 namespace ZFTest\Deploy;
 
-use PHPUnit_Framework_TestCase as TestCase;
+use PHPUnit\Framework\TestCase;
 use ZF\Deploy\Deploy;
 use Zend\Console\Console;
 use ZF\Console\Route;
@@ -21,7 +21,7 @@ class DeployTest extends TestCase
     /**
      * setUp from PHPUnit
      */
-    public function setUp()
+    protected function setUp()
     {
         ob_start();
         $this->console = Console::getInstance();
@@ -36,7 +36,7 @@ class DeployTest extends TestCase
     /**
      * tearDown from PHPUnit
      */
-    public function tearDown()
+    protected function tearDown()
     {
         if (file_exists($this->deployFile)) {
             unlink($this->deployFile);
@@ -195,7 +195,7 @@ class DeployTest extends TestCase
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             $this->markTestIncomplete('I cannot test without the Zip PHP extension installed');
         }
         $zip = new \ZipArchive;
@@ -222,7 +222,7 @@ class DeployTest extends TestCase
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             $this->markTestIncomplete('I cannot test without the Zip PHP extension installed');
         }
         $zip = new \ZipArchive;
@@ -247,7 +247,7 @@ class DeployTest extends TestCase
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             $this->markTestIncomplete('I cannot test without the Zip PHP extension installed');
         }
         $zip = new \ZipArchive;
@@ -271,7 +271,7 @@ class DeployTest extends TestCase
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             $this->markTestIncomplete('I cannot test without the Zip PHP extension installed');
         }
         $zip = new \ZipArchive;
@@ -302,7 +302,7 @@ class DeployTest extends TestCase
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             $this->markTestIncomplete('I cannot test without the Zip PHP extension installed');
         }
         $zip = new \ZipArchive;
@@ -335,7 +335,7 @@ class DeployTest extends TestCase
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             $this->markTestIncomplete('I cannot test without the Zip PHP extension installed');
         }
         $zip = new \ZipArchive;
@@ -368,7 +368,7 @@ class DeployTest extends TestCase
         $deploy($route, $this->console);
         $this->assertTrue(file_exists($this->deployFile));
 
-        if (!class_exists('ZipArchive')) {
+        if (! class_exists('ZipArchive')) {
             $this->markTestIncomplete('I cannot test without the Zip PHP extension installed');
         }
         $zip = new \ZipArchive;

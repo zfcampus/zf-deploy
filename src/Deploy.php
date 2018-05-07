@@ -535,7 +535,7 @@ class Deploy
         }
 
         if (is_array($modules) && count($modules) > 0) {
-            $exclude[$applicationPath . '/module'] =  true;
+            $exclude[$applicationPath . '/module'] = true;
         }
 
         self::recursiveCopy($applicationPath, $tmpDir, $exclude, $gitignore);
@@ -577,7 +577,7 @@ class Deploy
             for ($i = 0; $i < $tot; $i++) {
                 $normalized = str_replace('\\', '/', $config['modules'][$i]);
                 if (is_dir($applicationPath . '/module/' . $normalized)
-                    && !in_array($config['modules'][$i], $modules)
+                    && ! in_array($config['modules'][$i], $modules)
                 ) {
                     unset($config['modules'][$i]);
                 }
@@ -690,7 +690,7 @@ class Deploy
                 continue;
             }
 
-            if (!@unlink($dir . '/' . $obj)) {
+            if (! @unlink($dir . '/' . $obj)) {
                 self::recursiveDelete($dir . '/' . $obj);
             }
         }

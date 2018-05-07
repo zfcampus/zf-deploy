@@ -1,23 +1,20 @@
-ZFDeploy - deploy ZF applications
-=================================
+# ZFDeploy - deploy ZF applications
 
-[![Build Status](https://travis-ci.org/zfcampus/zf-deploy.png)](https://travis-ci.org/zfcampus/zf-deploy)
+[![Build Status](https://secure.travis-ci.org/zfcampus/zf-deploy.svg?branch=master)](https://secure.travis-ci.org/zfcampus/zf-deploy)
+[![Coverage Status](https://coveralls.io/repos/github/zfcampus/zf-deploy/badge.svg?branch=master)](https://coveralls.io/github/zfcampus/zf-deploy?branch=master)
 
-Introduction
-------------
+## Introduction
 
 **ZFDeploy** is a command line tool to deploy [Zend Framework](http://framework.zend.com) applications.
 
 This tool produces a file package ready to be deployed. The tool supports the following format:
 ZIP, TAR, TGZ (.TAR.GZ), .ZPK (the deployment file format of [Zend Server 6](http://files.zend.com/help/Zend-Server/zend-server.htm#understanding_the_package_structure.htm)).
 
-Requirements
-------------
+## Requirements
   
 Please see the [composer.json](composer.json) file.
 
-Installation
-------------
+## Installation
 
 ZFDeploy may be installed in two ways: as a standalone, updatable `phar` file,
 or via Composer.
@@ -80,8 +77,7 @@ And then run `composer update` to ensure the module is installed.
 
 If installed via composer, the script lives in `vendor/bin/zfdeploy.php` of your application.
 
-Usage
------
+## Usage
 
 > ### Note
 >
@@ -199,8 +195,7 @@ page of the project.
 > containing production configuration files, and these will then be included in your deployment
 > package.
 
-Getting help
-------------
+## Getting help
 
 The `help` command can list both the available commands, as well as provide the syntax for each
 command:

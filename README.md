@@ -1,5 +1,9 @@
 # ZFDeploy - deploy ZF applications
 
+> ## Repository abandoned 2019-12-31
+>
+> This repository is abandoned, and has no replacement provided.
+
 [![Build Status](https://secure.travis-ci.org/zfcampus/zf-deploy.svg?branch=master)](https://secure.travis-ci.org/zfcampus/zf-deploy)
 [![Coverage Status](https://coveralls.io/repos/github/zfcampus/zf-deploy/badge.svg?branch=master)](https://coveralls.io/github/zfcampus/zf-deploy?branch=master)
 
